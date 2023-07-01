@@ -1,0 +1,33 @@
+export [letter?, digit?, letter-or-digit?]
+{
+    func letter? (c) {
+        to-number(c) thus {
+            ((it >= to-number('a')) and (it <= to-number('z'))) or
+            ((it >= to-number('A')) and (it <= to-number('Z')))
+        }
+    }
+
+    func digit? (c) {
+        to-number(c) thus {
+            (it >= to-number('0')) and (it <= to-number('9'))
+        }
+    }
+
+    func letter-or-digit? (c) {
+        letter?(c) or digit?(c)
+    }
+}
+
+do {
+    println(:CHAR)
+    assert(letter?('z'))
+    assert(letter?('C'))
+    assert(not letter?(' '))
+    assert(not letter?('\n'))
+    assert(digit?('0'))
+    assert(digit?('5'))
+    assert(not digit?('x'))
+    assert(letter-or-digit?('9'))
+    assert(letter-or-digit?('a'))
+    assert(not letter-or-digit?('#'))
+}
