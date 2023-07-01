@@ -1,0 +1,150 @@
+func iter-file (f-name, tp) {
+    val ^f-hand = `:pointer fopen($f-name.Dyn->Ncast.Vector.buf, "r")`
+    coro () {
+        val f = ^^f-hand
+        defer {
+            `fclose($f.Pointer);`
+        }
+        loop {
+            val b = `:number fgetc($f.Pointer)`
+        } until (b == `:number EOF`) {
+            yield(to-char(b))
+        }
+    } thus {
+        iter(it)
+    }
+}
+
+do {
+    println(:ITER-FILE)
+    val itr :Iterator = iter-file("x.ceu")
+    assert(itr.f(itr) == '1')
+    assert(itr.f(itr) == ' ')
+    assert(itr.f(itr) == '2')
+    assert(itr.f(itr) == ' ')
+    assert(itr.f(itr) == ';')
+    ;;assert(false)
+}
+
+;;-----------------------------------------------------------------------------
+
+data :Pos = [lin,col]
+data :Chr = [pos :Pos, c]
+data :Buf = [prv :Chr, cur :Chr]
+
+func buf-init () {
+    [nil, [[1,0],nil]]
+}
+
+func f-read-c (f-itr :Iterator, buf :Buf) {
+    if buf.prv {
+        set buf.cur = buf.prv
+        set buf.prv = nil
+        buf.cur.c
+    } else {
+        val c = f-itr.f(f-itr)
+        set buf.cur.c = c
+        set buf.cur.pos = if (c == '\n')
+            -> [buf.cur.pos.lin+1 , 0]
+            -> [buf.cur.pos.lin   , buf.cur.pos.col+1]
+        c
+    }
+}
+
+func f-unread-c (buf :Buf) {
+    assert(buf.prv == nil)
+    set buf.prv = buf.cur
+    set buf.cur = nil
+    nil
+}
+
+do {
+    println(:F-READ-UNREAD)
+    val f-itr = iter-file("x.ceu")
+    val buf   = buf-init()
+    f-read-c(f-itr, buf) thus {
+        assert(buf === [nil,[[1,1],'1']])
+    }
+    f-unread-c(buf) thus {
+        assert(buf === [[[1,1],'1'],nil])
+    }
+    f-read-c(f-itr, buf) thus {
+        assert(buf === [nil,[[1,1],'1']])
+    }
+    f-read-c(f-itr, buf) thus {
+        assert(buf === [nil,[[1,2],' ']])
+    }
+    f-unread-c(buf) thus {
+        assert(buf === [[[1,2],' '],nil])
+    }
+    f-read-c(f-itr, buf) thus {
+        assert(buf === [nil,[[1,2],' ']])
+    }
+}
+
+func f-read-until-f (f-itr, buf, f-pred) {
+    val str = #[]
+    loop {
+        val c = f-read-c(f-itr, buf)
+    } until f-pred(c) {
+        set str[+] = c
+    }
+    move(str)
+}
+
+func f-read-until-c (f-itr, buf, c) {
+    f-read-until-f(f-itr, buf, \{ it == c })
+}
+
+do {
+    println(:F-READ-UNTIL)
+    val f-itr = iter-file("x.ceu")
+    val buf   = buf-init()
+    f-read-until-c(f-itr, buf, ';') thus {
+        assert(it === "1 2 ")
+    }
+    f-read-until-c(f-itr, buf, '\n') thus {
+        assert(it === "; 9")
+    }
+}
+
+;;-----------------------------------------------------------------------------
+
+func iter-skip (^f-itr :Iterator, ^buf :Buf) {
+    coro () {
+        loop {
+            val c = f-read-c(^^f-itr, ^^buf)
+        } while c {
+            ifs c {
+                in? [' ','\t','\n'] {}
+                == ';' {
+                    val c' = f-read-c(^^f-itr, ^^buf)
+                    if c' /= ';' {
+                        f-unread-c(^^buf)
+                    } else {
+                        f-read-until-c(^^f-itr, ^^buf, '\n')
+                    }
+                }
+                else -> yield(c)
+            }
+        }
+    } thus {
+        iter(it)
+    }
+}
+
+do {
+    println(:ITER-SKIP)
+    val f-itr = iter-file("x.ceu")
+    val buf   = buf-init()
+    val s-itr :Iterator = iter-skip(f-itr, buf)
+    s-itr.f(s-itr) thus {
+        assert(it == '1')
+    }
+    s-itr.f(s-itr) thus {
+        assert(it == '2')
+    }
+    s-itr.f(s-itr) thus {
+        assert(it == '3')
+    }
+}
