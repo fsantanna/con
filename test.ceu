@@ -179,17 +179,28 @@ do {
 
 func iter-lexer (^skip :Iterator, ^file :Iterator, ^buf :Buf) {
     coro () {
+        val SS :Iterator = ^^skip
+        val FF :Iterator = ^^file
+        val BB :Buf      = ^^buf
         loop {
-            val c = ^^skip.f(^^skip)
-            val :tmp pos = copy(^^buf.cur.pos)
+            val c = SS.f(SS)
+            val pos = copy(BB.cur.pos)
         } while c {
             ifs c {
                 digit?(c) {              ;; NUM
-                    f-unread-c(^^buf)
-                    f-read-while-f(^^file, ^^buf, \{
+                    f-unread-c(BB)
+                    f-read-while-f(FF, BB, \{
                         (it == '.') or letter-or-digit?(it)
                     }) thus num {
-                        yield(:Tk.Num [pos,num])
+                        yield(:Tk.Num [move(pos),num])
+                    }
+                }
+                letter?(c) or (c=='_') { ;; KEY, ID
+                    f-unread-c(BB)
+                    f-read-while-f(FF, BB, \{
+                        letter-or-digit?(it) or (it in? ['_','\'','?','!'])
+                    }) thus id {
+                        yield(:Tk.Id [move(pos),id])
                     }
                 }
                 else -> throw("invalid token")
@@ -209,18 +220,14 @@ do {
     lexer.f(lexer) thus {
         assert(it === :Tk.Num [[1,1],"1"])
     }
-println(:1)
     lexer.f(lexer) thus {
-println(it)
         assert(it === :Tk.Num [[1,3],"2"])
     }
-println(:2)
     lexer.f(lexer) thus {
         assert(it === :Tk.Num [[2,1],"3"])
     }
-println(:3)
     lexer.f(lexer) thus {
-        assert(it === :Tk.ID  [[3,5],"abc"])
+        assert(it === :Tk.Id  [[3,5],"abc"])
     }
 }
 
