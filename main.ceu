@@ -1,0 +1,33 @@
+func iter-file (f-name, tp) {
+    val ^f-hand = `:pointer fopen($f-name.Dyn->Ncast.Vector.buf, "r")`
+    coro () {
+        val f = ^^f-hand
+        defer {
+            `fclose($f.Pointer);`
+        }
+        loop {
+            val b = `:number fgetc($f.Pointer)`
+        } until (b == `:number EOF`) {
+            yield(to-char(b))
+        }
+    } thus {
+        iter(it)
+    }
+}
+
+do {
+    println(:ITER-FILE)
+    val itr :Iterator = iter-file("x.ceu")
+    assert(itr.f(itr) == '1')
+    assert(itr.f(itr) == ' ')
+    assert(itr.f(itr) == '2')
+    assert(itr.f(itr) == ' ')
+    assert(itr.f(itr) == ';')
+    ;;assert(false)
+}
+
+^["char.ceu"]
+^["buffer.ceu"]
+^["lexer.ceu"]
+
+;;-----------------------------------------------------------------------------

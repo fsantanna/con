@@ -1,0 +1,103 @@
+data :Pos = [lin,col]
+data :Chr = [pos :Pos, c]
+data :Buf = [prv :Chr, cur :Chr]
+
+export [
+    buf-init,
+    f-read-c, f-unread-c,
+    f-read-until-f, f-read-until-c,
+    f-read-while-f, f-read-while-c,
+] {
+    func buf-init () {
+        [nil, [[1,0],nil]]
+    }
+
+    func f-read-c (f-itr :Iterator, buf :Buf) {
+        if buf.prv {
+            set buf.cur = buf.prv
+            set buf.prv = nil
+            buf.cur.c
+        } else {
+            val c = f-itr.f(f-itr)
+            set buf.cur.c = c
+            set buf.cur.pos = if (c == '\n')
+                -> [buf.cur.pos.lin+1 , 0]
+                -> [buf.cur.pos.lin   , buf.cur.pos.col+1]
+            c
+        }
+    }
+
+    func f-unread-c (buf :Buf) {
+        assert(buf.prv == nil)
+        set buf.prv = buf.cur
+        set buf.cur = nil
+        nil
+    }
+
+    do {
+        println(:F-READ-UNREAD)
+        val f-itr = iter-file("x.ceu")
+        val buf   = buf-init()
+        f-read-c(f-itr, buf) thus {
+            assert(buf === [nil,[[1,1],'1']])
+        }
+        f-unread-c(buf) thus {
+            assert(buf === [[[1,1],'1'],nil])
+        }
+        f-read-c(f-itr, buf) thus {
+            assert(buf === [nil,[[1,1],'1']])
+        }
+        f-read-c(f-itr, buf) thus {
+            assert(buf === [nil,[[1,2],' ']])
+        }
+        f-unread-c(buf) thus {
+            assert(buf === [[[1,2],' '],nil])
+        }
+        f-read-c(f-itr, buf) thus {
+            assert(buf === [nil,[[1,2],' ']])
+        }
+    }
+
+    func f-read-until-f (f-itr, buf, f-pred) {
+        val str = #[]
+        loop {
+            val c = f-read-c(f-itr, buf)
+        } until f-pred(c) {
+            set str[+] = c
+        }
+        move(str)
+    }
+
+    func f-read-until-c (f-itr, buf, c) {
+        f-read-until-f(f-itr, buf, \{ it == c })
+    }
+
+    func f-read-while-f (f-itr, buf, f-pred) {
+        defer {
+            f-unread-c(buf)
+        }
+        f-read-until-f(f-itr, buf, \{ not f-pred(it) })
+    }
+
+    func f-read-while-c (f-itr, buf, c) {
+        f-read-while-f(f-itr, buf, \{ it == c })
+    }
+
+    do {
+        println(:F-READ-UNTIL)
+        val f-itr = iter-file("x.ceu")
+        val buf   = buf-init()
+        f-read-until-c(f-itr, buf, ';') thus {
+            assert(it === "1 2 ")
+        }
+        f-read-until-f(f-itr, buf, \{ it=='\n'}) thus {
+            assert(it === "; 9")
+        }
+        f-read-while-f(f-itr, buf, \{ it /= ';' }) thus {
+            assert(it === "3 ")
+        }
+        f-read-while-c(f-itr, buf, ';') thus {
+            assert(it === ";;")
+        }
+    }
+}
