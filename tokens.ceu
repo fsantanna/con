@@ -1,8 +1,10 @@
 data :Tokens = [lexer :Iterator, buf :Tk]
 
 export [tks-init, tks-eof?, tks-check, tks-read-chk, tks-read-err] {
-    func tks-init (lexer :Iterator) {
-        :Tokens [lexer, lexer.f(lexer)]
+    func tks-init (itr :Iterator) {
+        val lexer :Iterator = iter-lexer(itr)
+        val tk = lexer.f(lexer)
+        :Tokens [move(lexer), move(tk)]
     }
 
     func tks-eof? (tks :Tokens) {
@@ -39,8 +41,7 @@ export [tks-init, tks-eof?, tks-check, tks-read-chk, tks-read-err] {
 
     do {
         println(:TKS)
-        val lexer = iter-lexer(iter("1 , ["))
-        val tks = tks-init(lexer)
+        val tks = tks-init(iter("1 , ["))
         assert(tks-check(tks,:Tk.Num) === :Tk.Num [[1,1],"1"])
         assert(tks-read(tks)          === :Tk.Num [[1,1],"1"])
         assert(tks-read-chk(tks,",")  === :Tk.Sym [[1,3],","])

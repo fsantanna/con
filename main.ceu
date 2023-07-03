@@ -37,40 +37,31 @@ do {
 
 ;;-----------------------------------------------------------------------------
 
-;;;
 data :Con = [tk] {
-    :Num = []
+    :Num   = []
+    :Tuple = []
 }
 
-func tk-check (tk, tag, str) {
+func con-parse (tks :Tokens) {
     ifs {
-        (tag is? :vector) -> tk-check(tk,:Tk.Sym,tag) or tk-check(tk,:Tk.Tag,tag)
-        (tk is-not? tag)  -> nil
-        (str == nil)      -> tk
-        (tk.str =/= str)  -> nil
-        else              -> tk
-    }
-}
-
-func parse (lexer :Iterator) {
-    val :tmp cur = lexer.f(lexer)
-    ifs {
-        tk-check(cur, :Tk.Num) -> :Con.Num cur
-        tk-check(cur, "[")     -> .
+        tk = tks-read-chk(tks, :Tk.Num) -> :Con.Num tk
+        tk = tks-read-chk(tks, "[") {
+            tks-read-err(tks, "]")
+            :Con.Tuple tk
+        }
     }
 }
 
 do {
     println(:CON)
     do {
-        val lexer = iter-lexer(iter("1"))
-        val con   = parse(lexer)
+        val tks = tks-init(iter("1"))
+        val con = con-parse(tks)
         assert(con === :Con.Num [[1,1],"1"])
     }
     do {
-        val lexer = iter-lexer(iter("[]"))
-        val con   = parse(lexer)
-        assert(con === :Con.Num [[1,1],"1"])
+        val tks = tks-init(iter("[]"))
+        val con = con-parse(tks)
+        assert(con === :Con.Sym [[1,1],"["])
     }
 }
-;;;
