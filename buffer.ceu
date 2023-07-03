@@ -1,24 +1,24 @@
 data :Pos = [lin,col]
 data :Chr = [pos :Pos, c]
-data :Buf = [prv :Chr, cur :Chr]
+data :Buf = [itr :Iterator, prv :Chr, cur :Chr]
 
 export [
     buf-init,
-    f-read-c, f-unread-c,
-    f-read-until-f, f-read-until-c,
-    f-read-while-f, f-read-while-c,
+    buf-read-c, buf-unread-c,
+    buf-read-until-f, buf-read-until-c,
+    buf-read-while-f, buf-read-while-c,
 ] {
-    func buf-init () {
-        [nil, [[1,0],nil]]
+    func buf-init (inp :Iterator) {
+        [inp, nil, [[1,0],nil]]
     }
 
-    func f-read-c (f-itr :Iterator, buf :Buf) {
+    func buf-read-c (buf :Buf) {
         if buf.prv {
             set buf.cur = buf.prv
             set buf.prv = nil
             buf.cur.c
         } else {
-            val c = f-itr.f(f-itr)
+            val c = buf.itr.f(buf.itr)
             set buf.cur.c = c
             set buf.cur.pos = if (c == '\n')
                 -> [buf.cur.pos.lin+1 , 0]
@@ -27,7 +27,7 @@ export [
         }
     }
 
-    func f-unread-c (buf :Buf) {
+    func buf-unread-c (buf :Buf) {
         assert(buf.prv == nil)
         set buf.prv = buf.cur
         set buf.cur = nil
@@ -36,67 +36,65 @@ export [
 
     do {
         println(:F-READ-UNREAD)
-        val f-itr = iter-file("x.ceu")
-        val buf   = buf-init()
-        f-read-c(f-itr, buf) thus {
-            assert(buf === [nil,[[1,1],'1']])
+        val buf :Buf = buf-init(iter("12"))
+        buf-read-c(buf) thus {
+            assert(buf === [buf.itr, nil, [[1,1],'1']])
         }
-        f-unread-c(buf) thus {
-            assert(buf === [[[1,1],'1'],nil])
+        buf-unread-c(buf) thus {
+            assert(buf === [buf.itr, [[1,1],'1'],nil])
         }
-        f-read-c(f-itr, buf) thus {
-            assert(buf === [nil,[[1,1],'1']])
+        buf-read-c(buf) thus {
+            assert(buf === [buf.itr, nil,[[1,1],'1']])
         }
-        f-read-c(f-itr, buf) thus {
-            assert(buf === [nil,[[1,2],' ']])
+        buf-read-c(buf) thus {
+            assert(buf === [buf.itr, nil,[[1,2],'2']])
         }
-        f-unread-c(buf) thus {
-            assert(buf === [[[1,2],' '],nil])
+        buf-unread-c(buf) thus {
+            assert(buf === [buf.itr, [[1,2],'2'],nil])
         }
-        f-read-c(f-itr, buf) thus {
-            assert(buf === [nil,[[1,2],' ']])
+        buf-read-c(buf) thus {
+            assert(buf === [buf.itr, nil,[[1,2],'2']])
         }
     }
 
-    func f-read-until-f (f-itr, buf, f-pred) {
+    func buf-read-until-f (buf, f-pred) {
         val str = #[]
         loop {
-            val c = f-read-c(f-itr, buf)
+            val c = buf-read-c(buf)
         } until f-pred(c) {
             set str[+] = c
         }
         move(str)
     }
 
-    func f-read-until-c (f-itr, buf, c) {
-        f-read-until-f(f-itr, buf, \{ it == c })
+    func buf-read-until-c (buf, c) {
+        buf-read-until-f(buf, \{ it == c })
     }
 
-    func f-read-while-f (f-itr, buf, f-pred) {
+    func buf-read-while-f (buf, f-pred) {
         defer {
-            f-unread-c(buf)
+            buf-unread-c(buf)
         }
-        f-read-until-f(f-itr, buf, \{ not f-pred(it) })
+        buf-read-until-f(buf, \{ not f-pred(it) })
     }
 
-    func f-read-while-c (f-itr, buf, c) {
-        f-read-while-f(f-itr, buf, \{ it == c })
+    func buf-read-while-c (buf, c) {
+        buf-read-while-f(buf, \{ it == c })
     }
 
     do {
-        println(:F-READ-UNTIL)
-        val f-itr = iter-file("x.ceu")
-        val buf   = buf-init()
-        f-read-until-c(f-itr, buf, ';') thus {
+        println(:F-READ-UNTIL-WHILE)
+        val buf   = buf-init(iter("1 2 ;; 9\n3 ;;"))
+        buf-read-until-c(buf, ';') thus {
             assert(it === "1 2 ")
         }
-        f-read-until-f(f-itr, buf, \{ it=='\n'}) thus {
+        buf-read-until-f(buf, \{ it=='\n'}) thus {
             assert(it === "; 9")
         }
-        f-read-while-f(f-itr, buf, \{ it /= ';' }) thus {
+        buf-read-while-f(buf, \{ it /= ';' }) thus {
             assert(it === "3 ")
         }
-        f-read-while-c(f-itr, buf, ';') thus {
+        buf-read-while-c(buf, ';') thus {
             assert(it === ";;")
         }
     }
