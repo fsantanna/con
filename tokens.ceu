@@ -1,0 +1,52 @@
+data :Tokens = [lexer :Iterator, buf :Tk]
+
+export [tks-init, tks-eof?, tks-check, tks-read-chk, tks-read-err] {
+    func tks-init (lexer :Iterator) {
+        :Tokens [lexer, lexer.f(lexer)]
+    }
+
+    func tks-eof? (tks :Tokens) {
+        tks.buf == nil
+    }
+
+    func :rec tks-check (tks :Tokens, tag, str) {
+        ifs {
+            (tag is? :vector)     -> tks-check(tks,:Tk.Sym,tag) or
+                                     tks-check(tks,:Tk.Tag,tag)
+            (tks.buf is-not? tag) -> nil
+            (str == nil)          -> tks.buf
+            (tks.buf.str =/= str) -> nil
+            else                  -> tks.buf
+        }
+    }
+
+    func tks-read (tks :Tokens) {
+        val :tmp buf = tks.buf
+        set tks.buf = tks.lexer.f(tks.lexer)
+        buf
+    }
+
+    func tks-read-chk (tks :Tokens, tag, str) {
+        tks-check(tks,tag,str) and tks-read(tks)
+    }
+
+    func tks-read-err (tks :Tokens, tag, str) {
+        if not tks-check(tks,tag,str) {
+            throw("error")
+        }
+        tks-read(tks)
+    }
+
+    do {
+        println(:TKS)
+        val lexer = iter-lexer(iter("1 , ["))
+        val tks = tks-init(lexer)
+        assert(tks-check(tks,:Tk.Num) === :Tk.Num [[1,1],"1"])
+        assert(tks-read(tks)          === :Tk.Num [[1,1],"1"])
+        assert(tks-read-chk(tks,",")  === :Tk.Sym [[1,3],","])
+        assert(tks-read-chk(tks,"?")  === nil)
+        assert(tks-eof?(tks)          === false)
+        assert(tks-read-err(tks,"[")  === :Tk.Sym [[1,5],"["])
+        assert(tks-eof?(tks))
+    }
+}

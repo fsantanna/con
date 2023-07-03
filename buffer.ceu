@@ -1,6 +1,6 @@
-data :Pos = [lin,col]
-data :Chr = [pos :Pos, c]
-data :Buf = [itr :Iterator, prv :Chr, cur :Chr]
+data :Pos    = [lin,col]
+data :Char   = [pos :Pos, c]
+data :Buffer = [itr :Iterator, prv :Char, cur :Char]
 
 export [
     buf-init,
@@ -12,7 +12,7 @@ export [
         [inp, nil, [[1,0],nil]]
     }
 
-    func buf-read-c (buf :Buf) {
+    func buf-read-c (buf :Buffer) {
         if buf.prv {
             set buf.cur = buf.prv
             set buf.prv = nil
@@ -27,7 +27,7 @@ export [
         }
     }
 
-    func buf-unread-c (buf :Buf) {
+    func buf-unread-c (buf :Buffer) {
         assert(buf.prv == nil)
         set buf.prv = buf.cur
         set buf.cur = nil
@@ -36,7 +36,8 @@ export [
 
     do {
         println(:F-READ-UNREAD)
-        val buf :Buf = buf-init(iter("12"))
+        val itr = iter("12")
+        val buf :Buffer = buf-init(itr)
         buf-read-c(buf) thus {
             assert(buf === [buf.itr, nil, [[1,1],'1']])
         }
@@ -84,7 +85,7 @@ export [
 
     do {
         println(:F-READ-UNTIL-WHILE)
-        val buf   = buf-init(iter("1 2 ;; 9\n3 ;;"))
+        val buf = buf-init(iter("1 2 ;; 9\n3 ;;"))
         buf-read-until-c(buf, ';') thus {
             assert(it === "1 2 ")
         }

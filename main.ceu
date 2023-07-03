@@ -23,11 +23,54 @@ do {
     assert(itr.f(itr) == '2')
     assert(itr.f(itr) == ' ')
     assert(itr.f(itr) == ';')
+    assert(itr.f(itr) == ';')
+    assert(itr.f(itr) == ' ')
+    assert(itr.f(itr) == '9')
+    assert(itr.f(itr) == '\n')
     ;;assert(false)
 }
 
 ^["char.ceu"]
 ^["buffer.ceu"]
 ^["lexer.ceu"]
+^["tokens.ceu"]
 
 ;;-----------------------------------------------------------------------------
+
+;;;
+data :Con = [tk] {
+    :Num = []
+}
+
+func tk-check (tk, tag, str) {
+    ifs {
+        (tag is? :vector) -> tk-check(tk,:Tk.Sym,tag) or tk-check(tk,:Tk.Tag,tag)
+        (tk is-not? tag)  -> nil
+        (str == nil)      -> tk
+        (tk.str =/= str)  -> nil
+        else              -> tk
+    }
+}
+
+func parse (lexer :Iterator) {
+    val :tmp cur = lexer.f(lexer)
+    ifs {
+        tk-check(cur, :Tk.Num) -> :Con.Num cur
+        tk-check(cur, "[")     -> .
+    }
+}
+
+do {
+    println(:CON)
+    do {
+        val lexer = iter-lexer(iter("1"))
+        val con   = parse(lexer)
+        assert(con === :Con.Num [[1,1],"1"])
+    }
+    do {
+        val lexer = iter-lexer(iter("[]"))
+        val con   = parse(lexer)
+        assert(con === :Con.Num [[1,1],"1"])
+    }
+}
+;;;

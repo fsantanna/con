@@ -1,23 +1,23 @@
-data :Tk = [pos :Pos,str] {
+data :Tk = [pos :Pos, str] {
     :Sym = []
     :Tag = []
     :Num = []
 }
 
 export [iter-lexer] {
-    func iter-skip (^f-itr :Iterator, ^buf :Buf) {
+    func iter-skip (^buf :Buffer) {
         coro () {
             loop {
-                val c = f-read-c(^^f-itr, ^^buf)
+                val c = buf-read-c(^^buf)
             } while c {
                 ifs c {
                     in? [' ','\t','\n'] {}
                     == ';' {
-                        val c' = f-read-c(^^f-itr, ^^buf)
+                        val c' = buf-read-c(^^buf)
                         if c' /= ';' {
-                            f-unread-c(^^buf)
+                            buf-unread-c(^^buf)
                         } else {
-                            f-read-until-c(^^f-itr, ^^buf, '\n')
+                            buf-read-until-c(^^buf, '\n')
                         }
                     }
                     else -> yield(c)
@@ -30,43 +30,41 @@ export [iter-lexer] {
 
     do {
         println(:ITER-SKIP)
-        val f-itr = iter-file("x.ceu")
-        val buf   = buf-init()
-        val s-itr :Iterator = iter-skip(f-itr, buf)
-        s-itr.f(s-itr) thus {
+        val buf = buf-init(iter("1 2 ;; 9\n3 ;;"))
+        val skip :Iterator = iter-skip(buf)
+        skip.f(skip) thus {
             assert(it == '1')
         }
-        s-itr.f(s-itr) thus {
+        skip.f(skip) thus {
             assert(it == '2')
         }
-        s-itr.f(s-itr) thus {
+        skip.f(skip) thus {
             assert(it == '3')
         }
     }
 
-    func iter-lexer (^skip :Iterator, ^file :Iterator, ^buf :Buf) {
+    func iter-lexer (^inp :Iterator) {
         coro () {
-            val SS :Iterator = ^^skip
-            val FF :Iterator = ^^file
-            val BB :Buf      = ^^buf
+            val buf  :Buffer   = buf-init(^^inp)
+            val skip :Iterator = iter-skip(buf)
             loop {
-                val c = SS.f(SS)
-                val pos = copy(BB.cur.pos)
+                val c = skip.f(skip)
+                val pos = copy(buf.cur.pos)
             } while c {
                 ifs c {
                     in? ['@','#','(',')','[',']',',','-'] {
                         yield(:Tk.Sym [move(pos), to-string(c)])
                     }
-                    == ':' {               ;; TAG
-                        f-read-while-f(FF, BB, \{
+                    == ':' {                ;; TAG
+                        buf-read-while-f(buf, \{
                             letter-or-digit?(it)
                         }) thus tag {
                             yield(:Tk.Tag [move(pos), to-string(c) ++ tag])
                         }
                     }
                     digit?(c) {              ;; NUM
-                        f-unread-c(BB)
-                        f-read-while-f(FF, BB, \{
+                        buf-unread-c(buf)
+                        buf-read-while-f(buf, \{
                             (it == '.') or letter-or-digit?(it)
                         }) thus num {
                             yield(:Tk.Num [move(pos),move(num)])
@@ -82,10 +80,8 @@ export [iter-lexer] {
 
     do {
         println(:ITER-LEXER)
-        val file  = iter-file("x.ceu")
-        val buf   = buf-init()
-        val skip  :Iterator = iter-skip(file, buf)
-        val lexer :Iterator = iter-lexer(skip, file, buf)
+        val itr = iter-file("x.ceu")
+        val lexer :Iterator = iter-lexer(itr)
         lexer.f(lexer) thus {
             assert(it === :Tk.Num [[1,1],"1"])
         }
