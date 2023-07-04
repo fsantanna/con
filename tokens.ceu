@@ -34,7 +34,7 @@ export [tks-init, tks-eof?, tks-check, tks-read-chk, tks-read-err] {
 
     func tks-read-err (tks :Tokens, tag, str) {
         if not tks-check(tks,tag,str) {
-            throw("error")
+            throw((("error : expected " ++ to-string(tag)) ++ " ") ++ to-string(str))
         }
         tks-read(tks)
     }

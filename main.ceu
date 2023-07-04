@@ -37,17 +37,27 @@ do {
 
 ;;-----------------------------------------------------------------------------
 
-data :Con = [tk] {
-    :Num   = []
-    :Tuple = []
+var con-parse
+
+func con-list0 (tks :Tokens, sep, clo) {
+    var vec = #[]
+    loop until tks-read-chk(tks,clo) {
+        set vec[#vec] = [con-parse(tks)]
+    } until tks-read-chk(tks,clo) {
+    } while tks-read-err(tks,sep)
+    move(vec)
 }
 
-func con-parse (tks :Tokens) {
+set con-parse = func (tks :Tokens) {
     ifs {
-        tk = tks-read-chk(tks, :Tk.Num) -> :Con.Num tk
+        tk = tks-read-chk(tks, :Tk.Num) -> to-number(:Tk tk.str)
         tk = tks-read-chk(tks, "[") {
-            tks-read-err(tks, "]")
-            :Con.Tuple tk
+            val vec = con-list0(tks, ",", "]")
+            val tup = tuple(#vec)
+            loop in iter(vec,:all), v {
+                set tup[v.0] = move(v[1].0)
+            }
+            move(tup)
         }
     }
 }
@@ -57,11 +67,21 @@ do {
     do {
         val tks = tks-init(iter("1"))
         val con = con-parse(tks)
-        assert(con === :Con.Num [[1,1],"1"])
+        assert(con === 1)
     }
     do {
         val tks = tks-init(iter("[]"))
         val con = con-parse(tks)
-        assert(con === :Con.Sym [[1,1],"["])
+        assert(con === [])
+    }
+    do {
+        val tks = tks-init(iter("[1,2]"))
+        val con = con-parse(tks)
+        assert(con === [1,2])
+    }
+    do {
+        val tks = tks-init(iter("[1,[9],2]"))
+        val con = con-parse(tks)
+        assert(con === [1,[9],2])
     }
 }
