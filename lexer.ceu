@@ -56,17 +56,17 @@ export [iter-lexer] {
                         yield(:Tk.Sym [move(pos), to-string(c)])
                     }
                     == ':' {                ;; TAG
-                        buf-read-while-f(buf, \{
+                        buf-read-while-f(buf) \{
                             letter-or-digit?(it)
-                        }) thus tag {
+                        } thus tag {
                             yield(:Tk.Tag [move(pos), to-string(c) ++ tag])
                         }
                     }
-                    digit?(c) {              ;; NUM
+                    {{digit?}} {              ;; NUM
                         buf-unread-c(buf)
-                        buf-read-while-f(buf, \{
+                        buf-read-while-f(buf) \{
                             (it == '.') or letter-or-digit?(it)
-                        }) thus num {
+                        } thus num {
                             yield(:Tk.Num [move(pos),move(num)])
                         }
                     }

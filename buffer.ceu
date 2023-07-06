@@ -69,18 +69,18 @@ export [
     }
 
     func buf-read-until-c (buf, c) {
-        buf-read-until-f(buf, \{ it == c })
+        buf-read-until-f(buf) \{ it == c }
     }
 
     func buf-read-while-f (buf, f-pred) {
         defer {
             buf-unread-c(buf)
         }
-        buf-read-until-f(buf, \{ not f-pred(it) })
+        buf-read-until-f(buf) \{ not f-pred(it) }
     }
 
     func buf-read-while-c (buf, c) {
-        buf-read-while-f(buf, \{ it == c })
+        buf-read-while-f(buf) \{ it == c }
     }
 
     do {
@@ -89,10 +89,10 @@ export [
         buf-read-until-c(buf, ';') thus {
             assert(it === "1 2 ")
         }
-        buf-read-until-f(buf, \{ it=='\n'}) thus {
+        buf-read-until-f(buf) \{ it=='\n'} thus {
             assert(it === "; 9")
         }
-        buf-read-while-f(buf, \{ it /= ';' }) thus {
+        buf-read-while-f(buf) \{ it /= ';' } thus {
             assert(it === "3 ")
         }
         buf-read-while-c(buf, ';') thus {
