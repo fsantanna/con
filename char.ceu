@@ -1,16 +1,16 @@
 export [letter?, digit?, letter-or-digit?]
 {
     func letter? (c) {
-        (c is? :char) and to-number(c) thus {
+        (c is? :char) and (to-number(c) --> \{
             ((it >= to-number('a')) and (it <= to-number('z'))) or
             ((it >= to-number('A')) and (it <= to-number('Z')))
-        }
+        })
     }
 
     func digit? (c) {
-        (c is? :char) and to-number(c) thus {
+        (c is? :char) and (to-number(c) --> \{
             ((it >= to-number('0')) and (it <= to-number('9')))
-        }
+        })
     }
 
     func letter-or-digit? (c) {

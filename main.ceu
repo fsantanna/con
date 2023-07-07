@@ -1,6 +1,6 @@
 func iter-file (f-name, tp) {
     val ^f-hand = `:pointer fopen($f-name.Dyn->Ncast.Vector.buf, "r")`
-    coro () {
+    iter <-- coro () {
         val f = ^^f-hand
         defer {
             `fclose($f.Pointer);`
@@ -10,8 +10,6 @@ func iter-file (f-name, tp) {
         } until (b == `:number EOF`) {
             yield(to-char(b))
         }
-    } thus {
-        iter(it)
     }
 }
 
@@ -41,10 +39,10 @@ var con-parse
 
 func con-list0 (tks :Tokens, sep, clo) {
     var vec = #[]
-    loop until tks-read-chk(tks,clo) {
+    loop until tks->read-chk(clo) {
         set vec[#vec] = [con-parse(tks)]
-    } until tks-read-chk(tks,clo) {
-    } while tks-read-err(tks,sep)
+    } until tks->read-chk(clo) {
+    } while tks->read-err(sep)
 
     val tup = tuple(#vec)
     loop in iter(vec,:all), v {
@@ -55,11 +53,11 @@ func con-list0 (tks :Tokens, sep, clo) {
 
 set con-parse = func (tks :Tokens) {
     ifs {
-        tk = tks-read-chk(tks, :Tk.Num) -> to-number(:Tk tk.str)
-        tk = tks-read-chk(tks, :Tk.Tag) -> to-tag(:Tk tk.str)
-        tks-read-chk(tks, "[")          -> con-list0(tks, ",", "]")
-        tks-read-chk(tks, "#") and
-            tks-read-err(tks, "[")      -> to-vector(con-list0(tks, ",", "]"))
+        tk = tks->read-chk(:Tk.Num) => to-number(tk.(:Tk).str)
+        tk = tks->read-chk(:Tk.Tag) => to-tag(tk.(:Tk).str)
+        tks->read-chk("[")          => con-list0(tks, ",", "]")
+        tks->read-chk("#") and
+            tks->read-err("[")      => to-vector(con-list0(tks, ",", "]"))
     }
 }
 
@@ -67,7 +65,7 @@ do {
     println(:CON)
     do {
         val tks = tks-init(iter("1"))
-        val con = tks->con-parse()
+        val con = con-parse(tks)
         assert(con == 1)
     }
     do {
