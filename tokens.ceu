@@ -3,7 +3,7 @@ data :Tokens = [lexer :Iterator, buf :Tk]
 export [tks-init, eof?, check, read-chk, read-err] {
     func tks-init (itr :Iterator) {
         val lexer :Iterator = iter-lexer(itr)
-        val tk = lexer.f(lexer)
+        val tk = lexer->next()
         :Tokens [move(lexer), move(tk)]
     }
 
@@ -23,8 +23,8 @@ export [tks-init, eof?, check, read-chk, read-err] {
     }
 
     func read (tks :Tokens) {
-        val :tmp buf = tks.buf
-        set tks.buf = tks.lexer.f(tks.lexer)
+        val :tmp buf = tks.buf                  ;; TODO: error unsafe
+        set tks.buf = tks.lexer.f(tks.lexer)    ;;       not sure if f is safe
         buf
     }
 

@@ -16,15 +16,15 @@ func iter-file (f-name, tp) {
 do {
     println(:ITER-FILE)
     val itr :Iterator = iter-file("x.ceu")
-    assert(itr.f(itr) == '1')
-    assert(itr.f(itr) == ' ')
-    assert(itr.f(itr) == '2')
-    assert(itr.f(itr) == ' ')
-    assert(itr.f(itr) == ';')
-    assert(itr.f(itr) == ';')
-    assert(itr.f(itr) == ' ')
-    assert(itr.f(itr) == '9')
-    assert(itr.f(itr) == '\n')
+    assert(itr->next() == '1')
+    assert(itr->next() == ' ')
+    assert(itr->next() == '2')
+    assert(itr->next() == ' ')
+    assert(itr->next() == ';')
+    assert(itr->next() == ';')
+    assert(itr->next() == ' ')
+    assert(itr->next() == '9')
+    assert(itr->next() == '\n')
     ;;assert(false)
 }
 
@@ -45,7 +45,7 @@ func con-list0 (tks :Tokens, sep, clo) {
     } while tks->read-err(sep)
 
     val tup = tuple(#vec)
-    loop in iter(vec,:all), v {
+    loop v in iter(vec,:all) {
         set tup[v.0] = move(v[1].0)
     }
     move(tup)

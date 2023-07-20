@@ -18,7 +18,7 @@ export [
             set buf.prv = nil
             buf.cur.c
         } else {
-            val c = buf.itr.f(buf.itr)
+            val c = buf.itr->next()
             set buf.cur.c = c
             set buf.cur.pos = if (c == '\n')
                 => [buf.cur.pos.lin+1 , 0]
