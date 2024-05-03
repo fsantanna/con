@@ -27,11 +27,11 @@ func read (tks :Tokens) {
     buf
 }
 
-func read-chk (tks :Tokens, tg, str) {
+func check-read (tks :Tokens, tg, str) {
     tks->check(tg,str) and tks->read()
 }
 
-func read-err (tks :Tokens, tg, str) {
+func error-read (tks :Tokens, tg, str) {
     if not tks->check(tg,str) {
         error((("error : expected " ++ to-string(tg)) ++ " ") ++ to-string(str))
     }
@@ -41,11 +41,11 @@ func read-err (tks :Tokens, tg, str) {
 do {
     println(:TKS)
     val tks = tks-init(to-iter("1 , ["))
-    assert(tks->check(:Tk.Num) === :Tk.Num [[1,1],"1"])
-    assert(tks->read()         === :Tk.Num [[1,1],"1"])
-    assert(tks->read-chk(",")  === :Tk.Sym [[1,3],","])
-    assert(tks->read-chk("?")  === nil)
-    assert(tks->eof?()         === false)
-    assert(tks->read-err("[")  === :Tk.Sym [[1,5],"["])
+    assert(tks->check(:Tk.Num)  === :Tk.Num [[1,1],"1"])
+    assert(tks->read()          === :Tk.Num [[1,1],"1"])
+    assert(tks->check-read(",") === :Tk.Sym [[1,3],","])
+    assert(tks->check-read("?") === nil)
+    assert(tks->eof?()          === false)
+    assert(tks->error-read("[") === :Tk.Sym [[1,5],"["])
     assert(tks->eof?())
 }

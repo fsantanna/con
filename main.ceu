@@ -41,10 +41,10 @@ var con-parse
 func con-list0 (tks :Tokens, sep, clo) {
     var vec = #[]
     loop {
-        until tks->read-chk(clo)
+        until tks->check-read(clo)
         set vec[#vec] = [con-parse(tks)]
-        until tks->read-chk(clo)
-        while tks->read-err(sep)
+        until tks->check-read(clo)
+        while tks->error-read(sep)
     }
 
     val tup = tuple(#vec)
@@ -56,11 +56,11 @@ func con-list0 (tks :Tokens, sep, clo) {
 
 set con-parse = func (tks :Tokens) {
     ifs {
-        tks->read-chk(:Tk.Num) { ,tk1 :Tk => to-number(tk1.str) }
-        tks->read-chk(:Tk.Tag) { ,tk2 :Tk => to-tag(tk2.str)   }
-        tks->read-chk("[")     { con-list0(tks, ",", "]") }
-        tks->read-chk("#") and
-            tks->read-err("[") { to-vector(con-list0(tks, ",", "]")) }
+        tks->check-read(:Tk.Num) { ,tk1 :Tk => to-number(tk1.str) }
+        tks->check-read(:Tk.Tag) { ,tk2 :Tk => to-tag(tk2.str)   }
+        tks->check-read("[")     { con-list0(tks, ",", "]") }
+        tks->check-read("#") and
+            tks->error-read("[") { to-vector(con-list0(tks, ",", "]")) }
     }
 }
 
