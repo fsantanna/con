@@ -4,134 +4,132 @@ data :Tk = [pos :Pos, str] {
     :Num = []
 }
 
-export [iter-lexer] {
-    func iter-skip (^buf :Buffer) {
-        iter <-- coro () {
-            loop {
-                val c = ^^buf->read-c()
-            } while c {
-                ifs c {
-                    in? [' ','\t','\n'] {}
-                    == ';' {
-                        val c' = ^^buf->read-c()
-                        if c' /= ';' {
-                            ^^buf->unread-c()
-                        } else {
-                            ^^buf->read-until-c('\n')
-                        }
-                    }
-                    else => yield(c)
-                }
-            }
-        }
-    }
-
-    do {
-        println(:ITER-SKIP)
-        val buf = buf-init(iter("1 2 ;; 9\n3 ;;"))
-        val skip :Iterator = iter-skip(buf)
-        skip->next() --> \{
-            assert(it == '1')
-        }
-        skip->next() --> \{
-            assert(it == '2')
-        }
-        skip->next() --> \{
-            assert(it == '3')
-        }
-    }
-
-    func iter-lexer (^inp :Iterator) {
-        iter <-- coro () {
-            val buf  :Buffer   = buf-init(^^inp)
-            val skip :Iterator = iter-skip(buf)
-            loop {
-                val c = skip->next()
-                val pos = copy(buf.cur.pos)
-            } while c {
-                ifs c {
-                    in? ['@','#','(',')','[',']',',','-'] {
-                        yield(:Tk.Sym [move(pos), to-string(c)])
-                    }
-                    == ':' {                ;; TAG
-                        buf->read-while-f(letter-or-digit?) --> \{
-                            yield(:Tk.Tag [move(pos), to-string(c) ++ it])
-                        }
-                    }
-                    {{digit?}} {            ;; NUM
+func iter-skip (buf :Buffer) {
+    to-iter <-- coro () {
+        loop {
+            val c = buf->read-c()
+            while c
+            match c {
+                in? [' ','\t','\n'] {}
+                ';' {
+                    val c' = buf->read-c()
+                    if c' /= ';' {
                         buf->unread-c()
-                        buf->read-while-f \{
-                            (it == '.') or letter-or-digit?(it)
-                        } --> \{
-                            yield(:Tk.Num [move(pos),move(it)])
-                        }
+                    } else {
+                        buf->read-until-c('\n')
                     }
-                    else => throw("invalid token")
                 }
+                else => yield(c)
             }
         }
     }
+}
 
-    do {
-        println(:ITER-LEXER)
-        val itr = iter-file("x.ceu")
-        val lexer :Iterator = iter-lexer(itr)
-        lexer->next() --> \{
-            assert(it === :Tk.Num [[1,1],"1"])
+do {
+    println(:ITER-SKIP)
+    val buf = buf-init(to-iter("1 2 ;; 9\n3 ;;"))
+    val ski :Iterator = iter-skip(buf)
+    ski->next() thus {
+        assert(it == '1')
+    }
+    ski->next() thus {
+        assert(it == '2')
+    }
+    ski->next() thus {
+        assert(it == '3')
+    }
+}
+
+func iter-lexer (inp :Iterator) {
+    to-iter <-- coro () {
+        val buf :Buffer   = buf-init(inp)
+        val ski :Iterator = iter-skip(buf)
+        loop {
+            val c = ski->next()
+            val pos = copy(buf.cur.pos)
+            while c
+            match c {
+                in? ['@','#','(',')','[',']',',','-'] {
+                    yield(:Tk.Sym [pos, to-string(c)])
+                }
+                ':' {                   ;; TAG
+                    buf->read-while-f(letter-or-digit?) thus {
+                        yield(:Tk.Tag [pos, to-string(c) ++ it])
+                    }
+                }
+                {{digit?}} {            ;; NUM
+                    buf->unread-c()
+                    buf->read-while-f \{
+                        (it == '.') or letter-or-digit?(it)
+                    } thus {
+                        yield(:Tk.Num [pos,it])
+                    }
+                }
+                else => error("invalid token")
+            }
         }
-        lexer->next() --> \{
-            assert(it === :Tk.Num [[1,3],"2"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Num [[2,1],"3"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Tag [[3,5],":x"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,1],"@"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,2],"["])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,3],"("])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Num [[4,4],"10"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,6],","])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Num [[4,7],"20"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,9],")"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,10],"]"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,12],"#"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,13],"["])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,14],"-"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Num [[4,15],"1"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Num [[4,16],","])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Num [[4,17],":x"])
-        }
-        lexer->next() --> \{
-            assert(it === :Tk.Sym [[4,19],"]"])
-        }
+    }
+}
+
+do {
+    println(:ITER-LEXER)
+    val itr = iter-file("x.ceu")
+    val lexer :Iterator = iter-lexer(itr)
+    lexer->next() thus {
+        assert(it === :Tk.Num [[1,1],"1"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Num [[1,3],"2"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Num [[2,1],"3"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Tag [[3,5],":x"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,1],"@"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,2],"["])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,3],"("])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Num [[4,4],"10"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,6],","])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Num [[4,7],"20"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,9],")"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,10],"]"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,12],"#"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,13],"["])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,14],"-"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Num [[4,15],"1"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Num [[4,16],","])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Num [[4,17],":x"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[4,19],"]"])
     }
 }

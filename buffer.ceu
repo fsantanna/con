@@ -2,101 +2,94 @@ data :Pos    = [lin,col]
 data :Char   = [pos :Pos, c]
 data :Buffer = [itr :Iterator, prv :Char, cur :Char]
 
-export [
-    buf-init,
-    read-c, unread-c,
-    read-until-f, read-until-c,
-    read-while-f, read-while-c,
-] {
-    func buf-init (inp :Iterator) {
-        [inp, nil, [[1,0],nil]]
-    }
+func buf-init (inp :Iterator) {
+    [inp, nil, [[1,0],nil]]
+}
 
-    func read-c (buf :Buffer) {
-        if buf.prv {
-            set buf.cur = buf.prv
-            set buf.prv = nil
-            buf.cur.c
-        } else {
-            val c = buf.itr->next()
-            set buf.cur.c = c
-            set buf.cur.pos = if (c == '\n')
-                => [buf.cur.pos.lin+1 , 0]
-                => [buf.cur.pos.lin   , buf.cur.pos.col+1]
-            c
-        }
+func read-c (buf :Buffer) {
+    if buf.prv {
+        set buf.cur = buf.prv
+        set buf.prv = nil
+        buf.cur.c
+    } else {
+        val c = buf.itr->next()
+        set buf.cur.c = c
+        set buf.cur.pos = if (c == '\n')
+            => [buf.cur.pos.lin+1 , 0]
+            => [buf.cur.pos.lin   , buf.cur.pos.col+1]
+        c
     }
+}
 
-    func unread-c (buf :Buffer) {
-        assert(buf.prv == nil)
-        set buf.prv = buf.cur
-        set buf.cur = nil
-        nil
+func unread-c (buf :Buffer) {
+    assert(buf.prv == nil)
+    set buf.prv = buf.cur
+    set buf.cur = nil
+    nil
+}
+
+do {
+    println(:F-READ-UNREAD)
+    val itr = to-iter("12")
+    val buf :Buffer = buf-init(itr)
+    buf->read-c() thus {
+        assert(buf === [buf.itr, nil, [[1,1],'1']])
     }
-
-    do {
-        println(:F-READ-UNREAD)
-        val itr = iter("12")
-        val buf :Buffer = buf-init(itr)
-        buf->read-c() --> \{
-            assert(buf === [buf.itr, nil, [[1,1],'1']])
-        }
-        buf->unread-c() --> \{
-            assert(buf === [buf.itr, [[1,1],'1'],nil])
-        }
-        buf->read-c() --> \{
-            assert(buf === [buf.itr, nil,[[1,1],'1']])
-        }
-        buf->read-c() --> \{
-            assert(buf === [buf.itr, nil,[[1,2],'2']])
-        }
-        buf->unread-c() --> \{
-            assert(buf === [buf.itr, [[1,2],'2'],nil])
-        }
-        buf->read-c() --> \{
-            assert(buf === [buf.itr, nil,[[1,2],'2']])
-        }
+    buf->unread-c() thus {
+        assert(buf === [buf.itr, [[1,1],'1'],nil])
     }
-
-    func read-until-f (buf, f-pred) {
-        val str = #[]
-        loop {
-            val c = buf->read-c()
-        } until f-pred(c) {
-            set str[+] = c
-        }
-        move(str)
+    buf->read-c() thus {
+        assert(buf === [buf.itr, nil,[[1,1],'1']])
     }
-
-    func read-until-c (buf, c) {
-        buf->read-until-f() \{ it == c }
+    buf->read-c() thus {
+        assert(buf === [buf.itr, nil,[[1,2],'2']])
     }
-
-    func read-while-f (buf, f-pred) {
-        defer {
-            buf->unread-c()
-        }
-        buf->read-until-f() \{ not f-pred(it) }
+    buf->unread-c() thus {
+        assert(buf === [buf.itr, [[1,2],'2'],nil])
     }
-
-    func read-while-c (buf, c) {
-        buf->read-while-f() \{ it == c }
+    buf->read-c() thus {
+        assert(buf === [buf.itr, nil,[[1,2],'2']])
     }
+}
 
-    do {
-        println(:F-READ-UNTIL-WHILE)
-        val buf = buf-init(iter("1 2 ;; 9\n3 ;;"))
-        buf->read-until-c(';') --> \{
-            assert(it === "1 2 ")
-        }
-        buf->read-until-f() \{ it=='\n'} --> \{
-            assert(it === "; 9")
-        }
-        buf->read-while-f() \{ it /= ';' } --> \{
-            assert(it === "3 ")
-        }
-        buf->read-while-c(';') --> \{
-            assert(it === ";;")
-        }
+func read-until-f (buf, f-pred) {
+    val str = #[]
+    loop {
+        val c = buf->read-c()
+        until f-pred(c)
+        set str[+] = c
+    }
+    str
+}
+
+func read-until-c (buf, c) {
+    buf->read-until-f() \{ it == c }
+}
+
+func read-while-f (buf, f-pred) {
+    defer {
+        buf->unread-c()
+    }
+    buf->read-until-f() \{ not f-pred(it) }
+}
+
+func read-while-c (buf, c) {
+    buf->read-while-f() \{ it == c }
+}
+
+do {
+    println(:F-READ-UNTIL-WHILE)
+    val buf = buf-init(to-iter("1 2 ;; 9\n3 ;;"))
+    buf->read-until-c(';') thus {
+        assert(it === "1 2 ")
+    }
+    buf->read-until-f() \{ it=='\n'} thus {
+        assert(it === "; 9")
+    }
+    buf->read-while-f() \{ it /= ';' } thus {
+        assert(it === "3 ")
+    }
+    buf->read-while-c(';') thus {
+        assert(it === ";;")
     }
 }
