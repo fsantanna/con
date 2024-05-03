@@ -59,7 +59,7 @@ func iter-lexer (inp :Iterator) {
                 }
                 {{digit?}} {            ;; NUM
                     buf->unread-c()
-                    buf->read-while-f \{
+                    buf->read-while-f <- \{
                         (it == '.') or letter-or-digit?(it)
                     } thus {
                         yield(:Tk.Num [pos,it])

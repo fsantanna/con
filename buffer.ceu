@@ -63,18 +63,18 @@ func read-until-f (buf, f-pred) {
 }
 
 func read-until-c (buf, c) {
-    buf->read-until-f() \{ it == c }
+    buf->read-until-f <-- \{ it == c }
 }
 
 func read-while-f (buf, f-pred) {
     defer {
         buf->unread-c()
     }
-    buf->read-until-f() \{ not f-pred(it) }
+    buf->read-until-f <-- \{ not f-pred(it) }
 }
 
 func read-while-c (buf, c) {
-    buf->read-while-f() \{ it == c }
+    buf->read-while-f <-- \{ it == c }
 }
 
 do {
@@ -83,10 +83,10 @@ do {
     buf->read-until-c(';') thus {
         assert(it === "1 2 ")
     }
-    buf->read-until-f() \{ it=='\n'} thus {
+    buf->read-until-f <- \{ it=='\n'} thus {
         assert(it === "; 9")
     }
-    buf->read-while-f() \{ it /= ';' } thus {
+    buf->read-while-f <- \{ it /= ';' } thus {
         assert(it === "3 ")
     }
     buf->read-while-c(';') thus {
