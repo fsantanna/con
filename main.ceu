@@ -56,6 +56,9 @@ func con-list0 (tks :Tokens, sep, clo) {
 
 set con-parse = func (tks :Tokens) {
     ifs {
+        tks->check-read("nil")   { nil }
+        tks->check-read("false") { false }
+        tks->check-read("true")  { true }
         tks->check-read(:Tk.Num) { ,tk1 :Tk => to-number(tk1.str) }
         tks->check-read(:Tk.Tag) { ,tk2 :Tk => to-tag(tk2.str)   }
         tks->check-read("[")     { con-list0(tks, ",", "]") }
@@ -101,5 +104,25 @@ do {
         val tks = tks-init(to-iter("#[[1]]"))
         val con = con-parse(tks)
         assert(con === #[[1]])
+    }
+    do {
+        val tks = tks-init(to-iter("nil"))
+        val con = con-parse(tks)
+        assert(con === nil)
+    }
+    do {
+        val tks = tks-init(to-iter("false"))
+        val con = con-parse(tks)
+        assert(con === false)
+    }
+    do {
+        val tks = tks-init(to-iter("true"))
+        val con = con-parse(tks)
+        assert(con === true)
+    }
+    do {
+        val tks = tks-init(to-iter("tre"))
+        val con = con-parse(tks)
+        assert(con === true)
     }
 }

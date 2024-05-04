@@ -1,3 +1,5 @@
+val KEYS = ["false", "nil", "true"]
+
 data :Tk = [pos :Pos, str] {
     :Sym = []
     :Tag = []
@@ -57,6 +59,7 @@ func iter-lexer (inp :Iterator) {
                         yield(:Tk.Tag [pos, to-string(c) ++ it])
                     }
                 }
+                ;;'\'' { }
                 {{digit?}} {            ;; NUM
                     buf->unread-c()
                     buf->read-while-f <- \{
@@ -65,7 +68,12 @@ func iter-lexer (inp :Iterator) {
                         yield(:Tk.Num [pos,it])
                     }
                 }
-                else => error("invalid token")
+                {{letter?}} {           ;; KEY
+                    val key = to-string(c) ++ buf->read-while-f(letter?)
+                    assert(key in? KEYS, :Tk.Err [pos, "invalid keyword"])
+                    yield(:Tk.Sym [pos, key])
+                }
+                else => error(:Tk.Err [pos, "invalid character"])
             }
         }
     }
