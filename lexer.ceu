@@ -59,7 +59,9 @@ func iter-lexer (inp :Iterator) {
                         yield(:Tk.Tag [pos, to-string(c) ++ it])
                     }
                 }
-                ;;'\'' { }
+                '\'' {
+                    yield(:Tk.Chr [pos,it])
+                }
                 {{digit?}} {            ;; NUM
                     buf->unread-c()
                     buf->read-while-f <- \{
@@ -80,7 +82,77 @@ func iter-lexer (inp :Iterator) {
 }
 
 do {
-    println(:ITER-LEXER)
+    println(:LEXER)
+    do {
+        val itr = to-iter("")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next() thus {
+            assert(it == nil)
+        }
+    }
+    do {
+        val t = ['@','#','(',')','[',']',',','-']
+        val itr = to-iter("@#()[],-")
+        val lexer :Iterator = iter-lexer(itr)
+        loop c in t {
+            val tk :Tk = lexer->next()
+            assert(tk.str[0] == c)
+        }
+    }
+    do {
+        val itr = to-iter(":X :1 :a-b-c")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next() thus {
+            assert(it === :Tk.Tag [[1,1], ":X"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Tag [[1,4], ":1"])
+        }
+        lexer->next() thus {
+            ;; TODO
+            ;;assert(it === :Tk.Tag [[1,7], ":a-b-c"])
+        }
+    }
+    do {
+        val itr = to-iter("10 9")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next() thus {
+            assert(it === :Tk.Num [[1,1], "10"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Num [[1,4], "9"])
+        }
+    }
+    do {
+        val itr = to-iter("'z'")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next() thus {
+            println(it)
+            assert(it == :Tk.Chr ['z'])
+        }
+    }
+}
+
+do {
+    println(:LEXER-ERR)
+    catch {
+        val itr = to-iter("\n *")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next()
+    } thus {
+        assert(it === :Tk.Err [[2,2], "invalid character"])
+    }
+    catch {
+        val itr = to-iter("tru")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next()
+    } thus {
+        assert(it === :Tk.Err [[1,1], "invalid keyword"])
+    }
+}
+
+do {
+    println(:LEXER-X)
     val itr = iter-file("x.ceu")
     val lexer :Iterator = iter-lexer(itr)
     lexer->next() thus {
@@ -139,5 +211,14 @@ do {
     }
     lexer->next() thus {
         assert(it === :Tk.Sym [[4,19],"]"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[5,1],"nil"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[6,1],"'c'"])
+    }
+    lexer->next() thus {
+        assert(it === :Tk.Sym [[6,5],"'\\n'"])
     }
 }

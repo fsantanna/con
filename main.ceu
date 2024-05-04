@@ -120,9 +120,17 @@ do {
         val con = con-parse(tks)
         assert(con === true)
     }
-    do {
+    catch {
+        val tks = tks-init(to-iter("1"))
+        tks->error-read("[")
+    } thus {
+        assert(it === tag(:Err, "error : expected \"[\" : have \"1\""))
+    }
+    catch {
         val tks = tks-init(to-iter("tre"))
         val con = con-parse(tks)
         assert(con === true)
+    } thus {
+        assert(it === :Tk.Err [[1,1],"invalid keyword"])
     }
 }
