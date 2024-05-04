@@ -60,7 +60,22 @@ func iter-lexer (inp :Iterator) {
                     }
                 }
                 '\'' {
-                    yield(:Tk.Chr [pos,it])
+                    val c2 = buf->read-c()
+                    match c2 {
+                        '\'' => error(:Tk.Err [copy(buf.cur.pos), "unexpected \"'\""])
+                        nil => error(:Tk.Err [pos, "unterminated \"'\""])
+                        '\\' {
+                            val c3 = buf->read-c()
+                            assert(c3, :Tk.Err [pos, "unterminated \"'\""])
+                            #['\\',c3]
+                        }
+                        else => to-string(c2)
+                    } thus {
+                        buf->read-c() thus {
+                            assert(it == '\'', :Tk.Err [copy(buf.cur.pos), "expected \"'\""])
+                        }
+                        yield(:Tk.Chr [pos,"'" ++ to-string(it) ++ "'"])
+                    }
                 }
                 {{digit?}} {            ;; NUM
                     buf->unread-c()
@@ -75,7 +90,7 @@ func iter-lexer (inp :Iterator) {
                     assert(key in? KEYS, :Tk.Err [pos, "invalid keyword"])
                     yield(:Tk.Sym [pos, key])
                 }
-                else => error(:Tk.Err [pos, "invalid character"])
+                else => error(:Tk.Err [pos, "invalid input"])
             }
         }
     }
@@ -114,6 +129,19 @@ do {
         }
     }
     do {
+        val itr = to-iter("nil true false")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next() thus {
+            assert(it === :Tk.Tag [[1,1], "nil"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Tag [[1,5], "true"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Tag [[1,10], "false"])
+        }
+    }
+    do {
         val itr = to-iter("10 9")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next() thus {
@@ -123,14 +151,18 @@ do {
             assert(it === :Tk.Num [[1,4], "9"])
         }
     }
+;;;
     do {
-        val itr = to-iter("'z'")
+        val itr = to-iter("'z' '\n'")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next() thus {
-            println(it)
-            assert(it == :Tk.Chr ['z'])
+            assert(it === :Tk.Chr [[1,1], "'z'"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Chr [[1,5], "'\\n'"])
         }
     }
+;;;
 }
 
 do {
@@ -140,7 +172,7 @@ do {
         val lexer :Iterator = iter-lexer(itr)
         lexer->next()
     } thus {
-        assert(it === :Tk.Err [[2,2], "invalid character"])
+        assert(it === :Tk.Err [[2,2], "invalid input"])
     }
     catch {
         val itr = to-iter("tru")
@@ -148,6 +180,41 @@ do {
         lexer->next()
     } thus {
         assert(it === :Tk.Err [[1,1], "invalid keyword"])
+    }
+    catch {
+        val itr = to-iter("''")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next()
+    } thus {
+        assert(it === :Tk.Err [[1,2], "unexpected \"'\""])
+    }
+    catch {
+        val itr = to-iter("'")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next()
+    } thus {
+        assert(it === :Tk.Err [[1,1], "unterminated \"'\""])
+    }
+    catch {
+        val itr = to-iter("'ab'")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next()
+    } thus {
+        assert(it === :Tk.Err [[1,3], "expected \"'\""])
+    }
+    catch {
+        val itr = to-iter("'\\nx'")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next()
+    } thus {
+        assert(it === :Tk.Err [[1,4], "expected \"'\""])
+    }
+    catch {
+        val itr = to-iter("'\\")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next()
+    } thus {
+        assert(it === :Tk.Err [[1,1], "unterminated \"'\""])
     }
 }
 
@@ -216,9 +283,9 @@ do {
         assert(it === :Tk.Sym [[5,1],"nil"])
     }
     lexer->next() thus {
-        assert(it === :Tk.Sym [[6,1],"'c'"])
+        assert(it === :Tk.Chr [[6,1],"'c'"])
     }
     lexer->next() thus {
-        assert(it === :Tk.Sym [[6,5],"'\\n'"])
+        assert(it === :Tk.Chr [[6,5],"'\\n'"])
     }
 }
