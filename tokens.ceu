@@ -11,13 +11,13 @@ func eof? (tks :Tokens) {
 }
 
 func check (tks :Tokens, tg, str) {
-    match tg {
-        is? :vector            => tks->check(:Tk.Sym,tg) or
-                                  tks->check(:Tk.Tag,tg)
-        is-not? tks.buf        => nil
-        ,(str == nil)          => tks.buf
-        ,(tks.buf.str =/= str) => nil
-        else                   => tks.buf
+    ifs {
+        (tg is? :vector)      => tks->check(:Tk.Sym,tg) or
+                                 tks->check(:Tk.Tag,tg)
+        (tks.buf is-not? tg)  => nil
+        (str == nil)          => tks.buf
+        (tks.buf.str =/= str) => nil
+        else                  => tks.buf
     }
 }
 

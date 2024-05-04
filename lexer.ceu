@@ -4,7 +4,7 @@ data :Tk = [pos :Pos, str] {
     :Num = []
 }
 
-func iter-skip (buf :Buffer) {
+func iter-spaces (buf :Buffer) {
     to-iter <-- coro () {
         loop {
             val c = buf->read-c()
@@ -28,14 +28,14 @@ func iter-skip (buf :Buffer) {
 do {
     println(:ITER-SKIP)
     val buf = buf-init(to-iter("1 2 ;; 9\n3 ;;"))
-    val ski :Iterator = iter-skip(buf)
-    ski->next() thus {
+    val spc :Iterator = iter-spaces(buf)
+    spc->next() thus {
         assert(it == '1')
     }
-    ski->next() thus {
+    spc->next() thus {
         assert(it == '2')
     }
-    ski->next() thus {
+    spc->next() thus {
         assert(it == '3')
     }
 }
@@ -43,9 +43,9 @@ do {
 func iter-lexer (inp :Iterator) {
     to-iter <-- coro () {
         val buf :Buffer   = buf-init(inp)
-        val ski :Iterator = iter-skip(buf)
+        val spc :Iterator = iter-spaces(buf)
         loop {
-            val c = ski->next()
+            val c = spc->next()
             val pos = copy(buf.cur.pos)
             while c
             match c {
