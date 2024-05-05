@@ -60,7 +60,8 @@ set con-parse = func (tks :Tokens) {
         tks->check-read("false") { false }
         tks->check-read("true")  { true }
         tks->check-read(:Tk.Num) { ,tk1 :Tk => to-number(tk1.str) }
-        tks->check-read(:Tk.Tag) { ,tk2 :Tk => to-tag(tk2.str)   }
+        tks->check-read(:Tk.Tag) { ,tk2 :Tk => to-tag(tk2.str) }
+        tks->check-read(:Tk.Chr) { ,tk3 :Tk => to-char(tk3.str) }
         tks->check-read("[")     { con-list0(tks, ",", "]") }
         tks->check-read("#") and
             tks->error-read("[") { to-vector(con-list0(tks, ",", "]")) }
@@ -120,6 +121,17 @@ do {
         val con = con-parse(tks)
         assert(con === true)
     }
+    do {
+        val tks = tks-init(to-iter("'a'"))
+        val con = con-parse(tks)
+println(con)
+        assert(con === 'a')
+    }
+    do {
+        val tks = tks-init(to-iter("'\\n'"))
+        val con = con-parse(tks)
+        assert(con === '\n')
+    }
     catch {
         val tks = tks-init(to-iter("1"))
         tks->error-read("[")
@@ -132,5 +144,11 @@ do {
         assert(con === true)
     } thus {
         assert(it === :Tk.Err [[1,1],"invalid keyword"])
+    }
+    do {
+        val tks = tks-init(to-iter("[nil,#[1,2],'a']"))
+        val con = con-parse(tks)
+println(con)
+        assert(con === [nil,#[1,2],'a'])
     }
 }
