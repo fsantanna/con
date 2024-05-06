@@ -1,4 +1,4 @@
-func iter-file (f-name, tp) {
+func to-iter-file (f-name) {
     val f-ptr  = to-pointer(f-name)
     val f-hand = `:pointer fopen((char*)$f-ptr.Pointer, "r")`
     to-iter <-- coro () {
@@ -16,7 +16,7 @@ func iter-file (f-name, tp) {
 
 do {
     println(:ITER-FILE)
-    val itr :Iterator = iter-file("x.ceu")
+    val itr :Iterator = to-iter-file("x.ceu")
     assert(itr->next() == '1')
     assert(itr->next() == ' ')
     assert(itr->next() == '2')
@@ -61,12 +61,26 @@ set con-parse = func (tks :Tokens) {
         tks->check-read("false") { false }
         tks->check-read("true")  { true }
         tks->check-read(:Tk.Num) { ,tk1 :Tk => tk1.str->to-number }
-        tks->check-read(:Tk.Tag) { ,tk2 :Tk => tk2.str->to-tag }
+        tks->check-read(:Tk.Tag) { ,tk2 :Tk =>
+            val tg = tk2.str->to-tag
+            if not tks->check("[") {
+                tg
+            } else {
+                val tup = tks->con-parse()
+                tag(tg, tup)
+            }
+        }
         tks->check-read(:Tk.Chr) { ,tk3 :Tk => tk3.str->drop-first->drop-last->to-char }
         tks->check-read("[")     { con-list0(tks, ",", "]") }
         tks->check-read("#") and
             tks->error-read("[") { to-vector(con-list0(tks, ",", "]")) }
     }
+}
+
+func con-read (filename) {
+    val f = to-iter-file(filename)
+    val tks = tks-init(f)
+    con-parse(tks)
 }
 
 do {
@@ -149,5 +163,15 @@ do {
         val tks = tks-init(to-iter("[nil,#[1,2],'a']"))
         val con = con-parse(tks)
         assert(con === [nil,#[1,2],'a'])
+    }
+    do {
+        val tks = tks-init(to-iter(":X []"))
+        val con = con-parse(tks)
+println(con)
+        assert(con === :X [])
+    }
+    do {
+        println(con-read("x.con"))
+        println(:ok)
     }
 }
