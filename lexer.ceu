@@ -1,9 +1,12 @@
 val KEYS = ["false", "nil", "true"]
 
 data :Tk = [pos :Pos, str] {
+    :Err = []
     :Sym = []
     :Tag = []
     :Num = []
+    :Key = []
+    :Id  = []
 }
 
 func iter-spaces (buf :Buffer) {
@@ -51,7 +54,7 @@ func iter-lexer (inp :Iterator) {
             val pos = copy(buf.cur.pos)
             while c
             match c {
-                in? ['@','#','(',')','[',']',',','-'] {
+                in? ['@','#','(',')','[',']',',','-','='] {
                     yield(:Tk.Sym [pos, to-string(c)])
                 }
                 ':' {                   ;; TAG
@@ -85,10 +88,14 @@ func iter-lexer (inp :Iterator) {
                         yield(:Tk.Num [pos,it])
                     }
                 }
-                {{letter?}} {           ;; KEY
-                    val key = to-string(c) ++ buf->read-while-f(letter?)
-                    assert(key in? KEYS, :Tk.Err [pos, "invalid keyword"])
-                    yield(:Tk.Sym [pos, key])
+                {{letter?}} {           ;; KEY / ID
+                    val id = to-string(c) ++ buf->read-while-f(letter?)
+                    val tk = if id in? KEYS {
+                        :Tk.Sym [pos, id]
+                    } else {
+                        :Tk.Id  [pos, id]
+                    }
+                    yield(tk)
                 }
                 else => error(:Tk.Err [pos, "invalid input"])
             }
@@ -106,8 +113,8 @@ do {
         }
     }
     do {
-        val t = ['@','#','(',')','[',']',',','-']
-        val itr = to-iter("@#()[],-")
+        val t = ['@','#','(',')','[',']',',','-','=']
+        val itr = to-iter("@#()[],-=")
         val lexer :Iterator = iter-lexer(itr)
         loop c in t {
             val tk :Tk = lexer->next()
@@ -179,7 +186,8 @@ do {
         val lexer :Iterator = iter-lexer(itr)
         lexer->next()
     } thus {
-        assert(it === :Tk.Err [[1,1], "invalid keyword"])
+        ;;assert(it === :Tk.Err [[1,1], "invalid keyword"])
+        assert(it === :Tk.Id [[1,1], "tru"])
     }
     catch {
         val itr = to-iter("''")

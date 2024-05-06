@@ -81,14 +81,21 @@ set con-parse = func (tks :Tokens) {
             => to-vector(con-list(tks))
         tks->check-read("@") and tks->error-read("[") {
             con-list(tks) <- \{
-                tks->error-read("(")
-                val k = tks->con-parse()
-                tks->error-read(",")
-                val v = tks->con-parse()
-                tks->error-read(")")
-                [k,v]
+                if tks->check-read("(") {
+                    val k = tks->con-parse()
+                    tks->error-read(",")
+                    val v = tks->con-parse()
+                    tks->error-read(")")
+                    [k,v]
+                } else {
+                    val k :Tk = tks->error-read(:Tk.Id)
+                    tks->error-read("=")
+                    val v = tks->con-parse()
+                    [to-tag(":"++k.str) ,v]
+                }
             } --> to-dict
         }
+        else => error(:TODO)
     }
 }
 
@@ -174,10 +181,10 @@ do {
     }
     catch {
         val tks = tks-init(to-iter("tre"))
-        val con = con-parse(tks)
-        assert(con === true)
+        con-parse(tks)
     } thus {
-        assert(it === :Tk.Err [[1,1],"invalid keyword"])
+        assert(it === :TODO)
+        ;;assert(it === :Tk.Err [[1,1],"invalid keyword"])
     }
     do {
         val tks = tks-init(to-iter("[nil,#[1,-2],'a']"))
