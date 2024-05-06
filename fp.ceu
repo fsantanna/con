@@ -1,0 +1,35 @@
+func drop-first (vec, n) {
+    val ret = #[]
+    loop i in {(n or 1) => #vec{ {
+        set ret[+] = vec[i]
+    }
+    ret
+}
+
+func drop-last (vec, n) {
+    val ret = #[]
+    loop i in {0 => #vec-(n or 1){ {
+        set ret[i] = vec[i]
+    }
+    ret
+}
+
+func take-first (vec, n) {
+    val ret = #[]
+    loop i in {0 => (n or 1){ {
+        set ret[i] = vec[i]
+    }
+    ret
+}
+
+do {
+    assert(drop-first(#[1,2,3],2) === #[3])
+    assert(drop-first(#[1]) === #[])
+    assert(drop-first(#[],5) === #[])
+    assert(drop-last(#[1,2,3],2) === #[1])
+    assert(drop-last(#[1]) === #[])
+    assert(drop-last(#[],5) === #[])
+    assert(take-first(#[1]) === #[1])
+    assert(take-first(#[1,2,3],2) === #[1,2])
+    ;;assert(take-first(#[]) === #[])         ;; TODO: out of bounds
+}
