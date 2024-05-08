@@ -10,7 +10,7 @@ data :Tk = [pos :Pos, str] {
 }
 
 func iter-spaces (buf :Buffer) {
-    to-iter <-- coro () {
+    to.iter <-- coro () {
         loop {
             val c = buf->read-c()
             while c
@@ -32,7 +32,7 @@ func iter-spaces (buf :Buffer) {
 
 do {
     println(:ITER-SKIP)
-    val buf = buf-init(to-iter("1 2 ;; 9\n3 ;;"))
+    val buf = buf-init(to.iter("1 2 ;; 9\n3 ;;"))
     val spc :Iterator = iter-spaces(buf)
     spc->next() thus {
         assert(it == '1')
@@ -46,7 +46,7 @@ do {
 }
 
 func iter-lexer (inp :Iterator) {
-    to-iter <-- coro () {
+    to.iter <-- coro () {
         val buf :Buffer   = buf-init(inp)
         val spc :Iterator = iter-spaces(buf)
         loop {
@@ -55,11 +55,11 @@ func iter-lexer (inp :Iterator) {
             while c
             match c {
                 in? ['@','#','(',')','[',']',',','-','='] {
-                    yield(:Tk.Sym [pos, to-string(c)])
+                    yield(:Tk.Sym [pos, to.string(c)])
                 }
                 ':' {                   ;; TAG
                     buf->read-while-f(letter-or-digit?) thus {
-                        yield(:Tk.Tag [pos, to-string(c) ++ it])
+                        yield(:Tk.Tag [pos, to.string(c) ++ it])
                     }
                 }
                 '\'' {
@@ -72,12 +72,12 @@ func iter-lexer (inp :Iterator) {
                             assert(c3, :Tk.Err [pos, "unterminated \"'\""])
                             #['\\',c3]
                         }
-                        else => to-string(c2)
+                        else => to.string(c2)
                     } thus {
                         buf->read-c() thus {
                             assert(it == '\'', :Tk.Err [copy(buf.cur.pos), "expected \"'\""])
                         }
-                        yield(:Tk.Chr [pos,"'" ++ to-string(it) ++ "'"])
+                        yield(:Tk.Chr [pos,"'" ++ to.string(it) ++ "'"])
                     }
                 }
                 {{digit?}} {            ;; NUM
@@ -89,7 +89,7 @@ func iter-lexer (inp :Iterator) {
                     }
                 }
                 {{letter?}} {           ;; KEY / ID
-                    val id = to-string(c) ++ buf->read-while-f(letter?)
+                    val id = to.string(c) ++ buf->read-while-f(letter?)
                     val tk = if id in? KEYS {
                         :Tk.Sym [pos, id]
                     } else {
@@ -106,7 +106,7 @@ func iter-lexer (inp :Iterator) {
 do {
     println(:LEXER)
     do {
-        val itr = to-iter("")
+        val itr = to.iter("")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next() thus {
             assert(it == nil)
@@ -114,7 +114,7 @@ do {
     }
     do {
         val t = ['@','#','(',')','[',']',',','-','=']
-        val itr = to-iter("@#()[],-=")
+        val itr = to.iter("@#()[],-=")
         val lexer :Iterator = iter-lexer(itr)
         loop c in t {
             val tk :Tk = lexer->next()
@@ -122,7 +122,7 @@ do {
         }
     }
     do {
-        val itr = to-iter(":X :1 :a-b-c")
+        val itr = to.iter(":X :1 :a-b-c")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next() thus {
             assert(it === :Tk.Tag [[1,1], ":X"])
@@ -136,7 +136,7 @@ do {
         }
     }
     do {
-        val itr = to-iter("nil true false")
+        val itr = to.iter("nil true false")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next() thus {
             assert(it === :Tk.Tag [[1,1], "nil"])
@@ -149,7 +149,7 @@ do {
         }
     }
     do {
-        val itr = to-iter("10 9")
+        val itr = to.iter("10 9")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next() thus {
             assert(it === :Tk.Num [[1,1], "10"])
@@ -160,7 +160,7 @@ do {
     }
 ;;;
     do {
-        val itr = to-iter("'z' '\n'")
+        val itr = to.iter("'z' '\n'")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next() thus {
             assert(it === :Tk.Chr [[1,1], "'z'"])
@@ -175,14 +175,14 @@ do {
 do {
     println(:LEXER-ERR)
     catch {
-        val itr = to-iter("\n *")
+        val itr = to.iter("\n *")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next()
     } thus {
         assert(it === :Tk.Err [[2,2], "invalid input"])
     }
     catch {
-        val itr = to-iter("tru")
+        val itr = to.iter("tru")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next()
     } thus {
@@ -190,35 +190,35 @@ do {
         assert(it === :Tk.Id [[1,1], "tru"])
     }
     catch {
-        val itr = to-iter("''")
+        val itr = to.iter("''")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next()
     } thus {
         assert(it === :Tk.Err [[1,2], "unexpected \"'\""])
     }
     catch {
-        val itr = to-iter("'")
+        val itr = to.iter("'")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next()
     } thus {
         assert(it === :Tk.Err [[1,1], "unterminated \"'\""])
     }
     catch {
-        val itr = to-iter("'ab'")
+        val itr = to.iter("'ab'")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next()
     } thus {
         assert(it === :Tk.Err [[1,3], "expected \"'\""])
     }
     catch {
-        val itr = to-iter("'\\nx'")
+        val itr = to.iter("'\\nx'")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next()
     } thus {
         assert(it === :Tk.Err [[1,4], "expected \"'\""])
     }
     catch {
-        val itr = to-iter("'\\")
+        val itr = to.iter("'\\")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next()
     } thus {

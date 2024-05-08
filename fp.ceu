@@ -1,3 +1,12 @@
+;; composition
+
+func {{<|<}} (f,g) {
+    func (v) {
+        f(g(v))
+    }
+}
+
+
 func drop-first (vec, n) {
     val ret = #[]
     loop i in {(n or 1) => #vec{ {

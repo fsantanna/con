@@ -33,14 +33,14 @@ func check-read (tks :Tokens, tg, str) {
 
 func error-read (tks :Tokens, tg, str) {
     if not tks->check(tg,str) {
-        error(tag(:Err, "error : expected \"" ++ to-string(tg) ++ "\" : have \"" ++ tks.buf.str ++ "\""))
+        error(tag(:Err, "error : expected \"" ++ to.string(tg) ++ "\" : have \"" ++ tks.buf.str ++ "\""))
     }
     tks->read()
 }
 
 do {
     println(:TKS)
-    val tks = tks-init(to-iter("1 , ["))
+    val tks = tks-init(to.iter("1 , ["))
     assert(tks->check(:Tk.Num)  === :Tk.Num [[1,1],"1"])
     assert(tks->read()          === :Tk.Num [[1,1],"1"])
     assert(tks->check-read(",") === :Tk.Sym [[1,3],","])
@@ -52,7 +52,7 @@ do {
 do {
     println(:TKS-ERR)
     catch {
-        val tks = tks-init(to-iter("1 , ["))
+        val tks = tks-init(to.iter("1 , ["))
         tks->error-read("[")
     } thus {
         assert(it === tag(:Err, "error : expected \"[\" : have \"1\""))

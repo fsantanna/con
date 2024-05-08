@@ -1,7 +1,7 @@
 func to-iter-file (f-name) {
-    val f-ptr  = to-pointer(f-name)
+    val f-ptr  = to.pointer(f-name)
     val f-hand = `:pointer fopen((char*)$f-ptr.Pointer, "r")`
-    to-iter <-- coro () {
+    to.iter <-- coro () {
         val f = f-hand
         defer {
             `fclose($f.Pointer);`
@@ -9,7 +9,7 @@ func to-iter-file (f-name) {
         loop {
             val b = `:number fgetc($f.Pointer)`
             until (b == `:number EOF`)
-            yield(to-char(b))
+            yield(to.char(b))
         }
     }
 }
@@ -48,7 +48,9 @@ func con-list (tks :Tokens, f) {
         until tks->check-read("]")
         while tks->error-read(",")
     }
-    to-tuple(vec) thus {
+    to.tuple(vec) thus {
+        ;; TODO
+        ;;loop ([v],i)
         loop (v,i) in it {
             set it[i] = v[0]
         }
@@ -62,11 +64,11 @@ set con-parse = func (tks :Tokens) {
         tks->check-read("false") => false
         tks->check-read("true")  => true
         tks->check-read("-") and tks->error-read(:Tk.Num) { ,it :Tk =>
-            -(it.str->to-number)
+            -(it.str->to.number)
         }
-        tks->check-read(:Tk.Num) { ,tk1 :Tk => tk1.str->to-number }
+        tks->check-read(:Tk.Num) { ,tk1 :Tk => tk1.str->to.number }
         tks->check-read(:Tk.Tag) { ,tk2 :Tk =>
-            val tg = tk2.str->to-tag
+            val tg = tk2.str->to.tag
             if not tks->check("[") {
                 tg
             } else {
@@ -74,11 +76,11 @@ set con-parse = func (tks :Tokens) {
                 tag(tg, tup)
             }
         }
-        tks->check-read(:Tk.Chr) { ,tk3 :Tk => tk3.str->drop-first->drop-last->to-char }
+        tks->check-read(:Tk.Chr) { ,tk3 :Tk => tk3.str->drop-first->drop-last->to.char }
         tks->check-read("[")
             => con-list(tks)
         tks->check-read("#") and tks->error-read("[")
-            => to-vector(con-list(tks))
+            => to.vector(con-list(tks))
         tks->check-read("@") and tks->error-read("[") {
             con-list(tks) <- \{
                 if tks->check-read("(") {
@@ -91,9 +93,9 @@ set con-parse = func (tks :Tokens) {
                     val k :Tk = tks->error-read(:Tk.Id)
                     tks->error-read("=")
                     val v = tks->con-parse()
-                    [to-tag(":"++k.str) ,v]
+                    [to.tag(":"++k.str) ,v]
                 }
-            } --> to-dict
+            } --> to.dict
         }
         else => error(:TODO)
     }
@@ -108,106 +110,106 @@ func con-read (filename) {
 do {
     println(:CON)
     do {
-        val tks = tks-init(to-iter("1"))
+        val tks = tks-init(to.iter("1"))
         val con = con-parse(tks)
         assert(con == 1)
     }
     do {
-        val tks = tks-init(to-iter("-1"))
+        val tks = tks-init(to.iter("-1"))
         val con = con-parse(tks)
         assert(con == -1)
     }
     do {
-        val tks = tks-init(to-iter(":x"))
+        val tks = tks-init(to.iter(":x"))
         val con = con-parse(tks)
         assert(con == :x)
-        assert(to-string(con) === ":x")
+        assert(to.string(con) === ":x")
     }
     do {
-        val tks = tks-init(to-iter(":asdf"))
+        val tks = tks-init(to.iter(":asdf"))
         val con = con-parse(tks)
         assert(con == nil)
     }
     do {
-        val tks = tks-init(to-iter("[]"))
+        val tks = tks-init(to.iter("[]"))
         val con = con-parse(tks)
         assert(con === [])
     }
     do {
-        val tks = tks-init(to-iter("[1,2]"))
+        val tks = tks-init(to.iter("[1,2]"))
         val con = con-parse(tks)
         assert(con === [1,2])
     }
     do {
-        val tks = tks-init(to-iter("[1,[9],2]"))
+        val tks = tks-init(to.iter("[1,[9],2]"))
         val con = con-parse(tks)
         assert(con === [1,[9],2])
     }
     do {
-        val tks = tks-init(to-iter("#[[1]]"))
+        val tks = tks-init(to.iter("#[[1]]"))
         val con = con-parse(tks)
         assert(con === #[[1]])
     }
     do {
-        val tks = tks-init(to-iter("nil"))
+        val tks = tks-init(to.iter("nil"))
         val con = con-parse(tks)
         assert(con === nil)
     }
     do {
-        val tks = tks-init(to-iter("false"))
+        val tks = tks-init(to.iter("false"))
         val con = con-parse(tks)
         assert(con === false)
     }
     do {
-        val tks = tks-init(to-iter("true"))
+        val tks = tks-init(to.iter("true"))
         val con = con-parse(tks)
         assert(con === true)
     }
     do {
-        val tks = tks-init(to-iter("'a'"))
+        val tks = tks-init(to.iter("'a'"))
         val con = con-parse(tks)
         assert(con === 'a')
     }
     do {
-        val tks = tks-init(to-iter("'\\n'"))
+        val tks = tks-init(to.iter("'\\n'"))
         val con = con-parse(tks)
         assert(con === '\n')
     }
     catch {
-        val tks = tks-init(to-iter("1"))
+        val tks = tks-init(to.iter("1"))
         tks->error-read("[")
     } thus {
         assert(it === tag(:Err, "error : expected \"[\" : have \"1\""))
     }
     catch {
-        val tks = tks-init(to-iter("tre"))
+        val tks = tks-init(to.iter("tre"))
         con-parse(tks)
     } thus {
         assert(it === :TODO)
         ;;assert(it === :Tk.Err [[1,1],"invalid keyword"])
     }
     do {
-        val tks = tks-init(to-iter("[nil,#[1,-2],'a']"))
+        val tks = tks-init(to.iter("[nil,#[1,-2],'a']"))
         val con = con-parse(tks)
         assert(con === [nil,#[1,-2],'a'])
     }
     do {
-        val tks = tks-init(to-iter(":X []"))
+        val tks = tks-init(to.iter(":X []"))
         val con = con-parse(tks)
         assert(con === :X [])
     }
     do {
-        val tks = tks-init(to-iter("@[]"))
+        val tks = tks-init(to.iter("@[]"))
         val con = con-parse(tks)
         assert(con === @[])
     }
     do {
-        val tks = tks-init(to-iter("@[(true,[]),(:x,'a')]"))
+        val tks = tks-init(to.iter("@[(true,[]),(:x,'a')]"))
         val con = con-parse(tks)
         assert(con === @[(true,[]),(:x,'a')])
     }
     do {
-        val tks = tks-init(to-iter("@[x=-10,y=20]"))
+        val tks = tks-init(to.iter("@[x=-10,y=20]"))
         val con = con-parse(tks)
         assert(con === @[(:x,-10),(:y,20)])
     }
