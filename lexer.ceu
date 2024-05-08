@@ -80,6 +80,9 @@ func iter-lexer (inp :Iterator) {
                         yield(:Tk.Chr [pos,"'" ++ to.string(it) ++ "'"])
                     }
                 }
+                '"' {
+                    error(:TODO)
+                }
                 {{char.digit?}} {            ;; NUM
                     buf->unread-c()
                     buf->read-while-f <- \{
@@ -158,9 +161,8 @@ do {
             assert(it === :Tk.Num [[1,4], "9"])
         }
     }
-;;;
     do {
-        val itr = to.iter("'z' '\n'")
+        val itr = to.iter("'z' '\\n'")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next() thus {
             assert(it === :Tk.Chr [[1,1], "'z'"])
