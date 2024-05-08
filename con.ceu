@@ -76,7 +76,7 @@ set con-parse = func (tks :Tokens) {
                 tag(tg, tup)
             }
         }
-        tks->check-read(:Tk.Chr) { ,tk3 :Tk => tk3.str->drop-first->drop-last->to.char }
+        tks->check-read(:Tk.Chr) { ,tk3 :Tk => tk3.str->fp.drop-first->fp.drop-last->to.char }
         tks->check-read("[")
             => con-list(tks)
         tks->check-read("#") and tks->error-read("[")

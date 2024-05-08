@@ -1,6 +1,6 @@
 data :Pos    = [lin,col]
-data :Char   = [pos :Pos, c]
-data :Buffer = [itr :Iterator, prv :Char, cur :Char]
+data :BChar  = [pos :Pos, c]    ;; TODO: nested anon template
+data :Buffer = [itr :Iterator, prv :BChar, cur :BChar]
 
 func buf-init (inp :Iterator) {
     [inp, nil, [[1,0],nil]]

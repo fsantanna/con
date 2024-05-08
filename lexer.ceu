@@ -58,7 +58,7 @@ func iter-lexer (inp :Iterator) {
                     yield(:Tk.Sym [pos, to.string(c)])
                 }
                 ':' {                   ;; TAG
-                    buf->read-while-f(letter-or-digit?) thus {
+                    buf->read-while-f(char.letter-or-digit?) thus {
                         yield(:Tk.Tag [pos, to.string(c) ++ it])
                     }
                 }
@@ -80,16 +80,16 @@ func iter-lexer (inp :Iterator) {
                         yield(:Tk.Chr [pos,"'" ++ to.string(it) ++ "'"])
                     }
                 }
-                {{digit?}} {            ;; NUM
+                {{char.digit?}} {            ;; NUM
                     buf->unread-c()
                     buf->read-while-f <- \{
-                        (it == '.') or letter-or-digit?(it)
+                        (it == '.') or char.letter-or-digit?(it)
                     } thus {
                         yield(:Tk.Num [pos,it])
                     }
                 }
-                {{letter?}} {           ;; KEY / ID
-                    val id = to.string(c) ++ buf->read-while-f(letter?)
+                {{char.letter?}} {           ;; KEY / ID
+                    val id = to.string(c) ++ buf->read-while-f(char.letter?)
                     val tk = if id in? KEYS {
                         :Tk.Sym [pos, id]
                     } else {
