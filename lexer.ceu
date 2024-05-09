@@ -82,6 +82,12 @@ func iter-lexer (inp :Iterator) {
                 }
                 '"' {
                     error(:TODO)
+                    val prv = [nil]
+                    val v = buf->read-until-f <- \{
+                        val brk = (it == '"') and (prv[0] /= '\\')
+                        set prv[0] = it
+                        brk
+                    }
                 }
                 {{char.digit?}} {            ;; NUM
                     buf->unread-c()

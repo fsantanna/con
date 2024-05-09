@@ -49,6 +49,13 @@ test {
     buf->read-c() thus {
         assert(buf === [buf.itr, nil,[[1,2],'2']])
     }
+    buf->read-c() thus {
+        assert(it == nil)
+    }
+    val err = catch {
+        buf->read-c()
+    }
+    assert(err is? :pointer)
 }
 
 func read-until-f (buf, f-pred) {
@@ -56,6 +63,7 @@ func read-until-f (buf, f-pred) {
     loop {
         val c = buf->read-c()
         until f-pred(c)
+        assert(c, :Buffer [str])
         set str[+] = c
     }
     str
@@ -91,4 +99,8 @@ test {
     buf->read-while-c(';') thus {
         assert(it === ";;")
     }
+    val err = catch {
+        buf->read-until-c('x')
+    }
+    assert((err is? :Buffer) and (err[0] === " abc "))
 }
