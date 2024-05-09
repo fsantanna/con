@@ -172,6 +172,17 @@ do {
         }
     }
 ;;;
+    do {
+        val itr = to.iter("\"ola\" \"\\n\"")
+        val lexer :Iterator = iter-lexer(itr)
+        lexer->next() thus {
+            assert(it === :Tk.Chr [[1,1], "'z'"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Chr [[1,1], "'z'"])
+        }
+    }
+;;;
 }
 
 do {
