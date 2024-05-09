@@ -14,7 +14,7 @@ func to-iter-file (f-name) {
     }
 }
 
-do {
+test {
     println(:ITER-FILE)
     val itr :Iterator = to-iter-file("x.ceu")
     assert(itr->next() == '1')
@@ -107,7 +107,7 @@ func con-read (filename) {
     con-parse(tks)
 }
 
-do {
+test {
     println(:CON)
     do {
         val tks = tks-init(to.iter("1"))

@@ -30,7 +30,7 @@ func iter-spaces (buf :Buffer) {
     }
 }
 
-do {
+test {
     println(:ITER-SKIP)
     val buf = buf-init(to.iter("1 2 ;; 9\n3 ;;"))
     val spc :Iterator = iter-spaces(buf)
@@ -106,7 +106,7 @@ func iter-lexer (inp :Iterator) {
     }
 }
 
-do {
+test {
     println(:LEXER)
     do {
         val itr = to.iter("")
@@ -185,7 +185,7 @@ do {
 ;;;
 }
 
-do {
+test {
     println(:LEXER-ERR)
     catch {
         val itr = to.iter("\n *")
@@ -239,7 +239,7 @@ do {
     }
 }
 
-do {
+test {
     println(:LEXER-X)
     val itr = to-iter-file("x.ceu")
     val lexer :Iterator = iter-lexer(itr)

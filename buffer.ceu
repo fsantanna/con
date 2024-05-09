@@ -27,7 +27,7 @@ func unread-c (buf :Buffer) {
     nil
 }
 
-do {
+test {
     println(:F-READ-UNREAD)
     val itr = to-iter("12")
     val buf :Buffer = buf-init(itr)
@@ -76,9 +76,9 @@ func read-while-c (buf, c) {
     buf->read-while-f <-- \{ it == c }
 }
 
-do {
+test {
     println(:F-READ-UNTIL-WHILE)
-    val buf = buf-init(to-iter("1 2 ;; 9\n3 ;;"))
+    val buf = buf-init(to-iter("1 2 ;; 9\n3 ;; abc "))
     buf->read-until-c(';') thus {
         assert(it === "1 2 ")
     }

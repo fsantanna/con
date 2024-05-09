@@ -18,7 +18,7 @@ val char :Char = do {
     [x-letter?, x-digit?, x-letter-or-digit?]
 }
 
-do {
+test {
     println(:CHAR)
     assert(not char.letter?(nil))
     assert(char.letter?('z'))

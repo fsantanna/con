@@ -33,7 +33,7 @@ val fp :Fp = do {
     [x-drop-first, x-drop-last, x-take-first]
 }
 
-do {
+test {
     assert(fp.drop-first(#[1,2,3],2) === #[3])
     assert(fp.drop-first(#[1]) === #[])
     assert(fp.drop-first(#[],5) === #[])

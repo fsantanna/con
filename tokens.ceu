@@ -38,7 +38,7 @@ func error-read (tks :Tokens, tg, str) {
     tks->read()
 }
 
-do {
+test {
     println(:TKS)
     val tks = tks-init(to.iter("1 , ["))
     assert(tks->check(:Tk.Num)  === :Tk.Num [[1,1],"1"])
@@ -49,7 +49,7 @@ do {
     assert(tks->error-read("[") === :Tk.Sym [[1,5],"["])
     assert(tks->eof?())
 }
-do {
+test {
     println(:TKS-ERR)
     catch {
         val tks = tks-init(to.iter("1 , ["))
