@@ -93,7 +93,7 @@ set con-parse = func (tks :Tokens) {
                     val k :Tk = tks->error-read(:Tk.Id)
                     tks->error-read("=")
                     val v = tks->con-parse()
-                    [to.tag(":"++k.str), v]
+                    [to.tag(":"++k.str) or :nil, v]
                 }
             } --> to.dict
         }
@@ -216,6 +216,6 @@ test {
     do {
         enum { :vec, :tup, :str }
         val con = con-read("x.con")
-        assert(con === @[(:vec,#[1,2,3]), (:tup,[true,nil,false,'a']), (:str,"ola"), (1,10), (2,20)])
+        assert(con === @[(:vec,#[1,2,3]), (:tup,[true,nil,false,'a']), (:str,"ola"), (:nil,:nil), (1,-10), (2,20)])
     }
 }
