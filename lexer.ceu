@@ -81,12 +81,30 @@ func iter-lexer (inp :Iterator) {
                     }
                 }
                 '"' {
-                    error(:TODO)
-                    val prv = [nil]
-                    val v = buf->read-until-f <- \{
-                        val brk = (it == '"') and (prv[0] /= '\\')
-                        set prv[0] = it
-                        brk
+                    val v = catch :Buffer {
+                        val prv = [nil]
+                        buf->read-until-f <- \{
+                            val brk = (it == '"') and (prv[0] /= '\\')
+                            set prv[0] = it
+                            brk
+                        }
+                    }
+                    if v is? :Buffer {
+                        yield(:Tk.Err [pos, "string error : unterminated \""])
+                    } else {
+                        yield(:Tk.Sym [pos, "#"])
+                        yield(:Tk.Sym [pos, "["])
+                        val itr :Iterator = to.iter(v)
+                        loop (c',i) in itr {
+                            if i > 0 {
+                                yield(:Tk.Sym [pos, ","])
+                            }
+                            val s = if (c' == '\\')
+                                        => (#[c', x] where { val x=itr.f(itr) })
+                                        => #[c']
+                            yield(:Tk.Chr [pos, "'" ++ s ++ "'"])
+                        }
+                        yield(:Tk.Sym [pos, "]"])
                     }
                 }
                 {{char.digit?}} {            ;; NUM
@@ -177,18 +195,43 @@ test {
             assert(it === :Tk.Chr [[1,5], "'\\n'"])
         }
     }
-;;;
     do {
-        val itr = to.iter("\"ola\" \"\\n\"")
+        val itr = to.iter("\"oi\" \"\\n\" \"xxx\\")
         val lexer :Iterator = iter-lexer(itr)
         lexer->next() thus {
-            assert(it === :Tk.Chr [[1,1], "'z'"])
+            assert(it === :Tk.Sym [[1,1], "#"])
         }
         lexer->next() thus {
-            assert(it === :Tk.Chr [[1,1], "'z'"])
+            assert(it === :Tk.Sym [[1,1], "["])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Chr [[1,1], "'o'"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Sym [[1,1], ","])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Chr [[1,1], "'i'"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Sym [[1,1], "]"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Sym [[1,6], "#"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Sym [[1,6], "["])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Chr [[1,6], "'\\n'"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Sym [[1,6], "]"])
+        }
+        lexer->next() thus {
+            assert(it === :Tk.Err [[1,11], "string error : unterminated \""])
         }
     }
-;;;
 }
 
 test {
