@@ -95,13 +95,14 @@ func iter-lexer (inp :Iterator) {
                         yield(:Tk.Sym [pos, "#"])
                         yield(:Tk.Sym [pos, "["])
                         val itr :Iterator = to.iter(v)
-                        error(:TODO)
-                        loop [c',i] in itr {
-                            if i > 0 {
+                        loop c' in itr {
+                            if itr.i > 1 {
                                 yield(:Tk.Sym [pos, ","])
                             }
                             val s = if (c' == '\\')
-                                        => (#[c', x] where { val x=itr.f(itr) })
+                                        => (#[c', x] where {
+                                                val x=itr.f(itr)
+                                             })
                                         => #[c']
                             yield(:Tk.Chr [pos, "'" ++ s ++ "'"])
                         }

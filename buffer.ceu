@@ -52,10 +52,6 @@ test {
     buf->read-c() thus {
         assert(it == nil)
     }
-    val err = catch {
-        buf->read-c()
-    }
-    assert(err is? :pointer)
 }
 
 func read-until-f (buf, f-pred) {

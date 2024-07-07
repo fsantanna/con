@@ -49,8 +49,7 @@ func con-list (tks :Tokens, f) {
         while tks->error-read(",")
     }
     to.tuple(vec) thus {
-        error(:TODO)
-        loop [[v],i] in it {
+        loop [i,[v]] in to.iter(it,[:idx,:val]) {
             set it[i] = v
         }
         it
