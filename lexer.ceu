@@ -83,7 +83,7 @@ func iter-lexer (inp :Iterator) {
                 '"' {
                     val v = catch :Buffer {
                         val prv = [nil]
-                        buf->read-until-f <- \{
+                        buf->read-until-f <- {
                             val brk = (it == '"') and (prv[0] /= '\\')
                             set prv[0] = it
                             brk
@@ -111,7 +111,7 @@ func iter-lexer (inp :Iterator) {
                 }
                 {{char.digit?}} {            ;; NUM
                     buf->unread-c()
-                    buf->read-while-f <- \{
+                    buf->read-while-f <- {
                         (it == '.') or char.letter-or-digit?(it)
                     } thus {
                         yield(:Tk.Num [pos,it])

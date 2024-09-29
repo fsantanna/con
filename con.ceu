@@ -61,11 +61,11 @@ set con-parse = func (tks :Tokens) {
         tks->check-read("nil")   => nil
         tks->check-read("false") => false
         tks->check-read("true")  => true
-        tks->check-read("-") and tks->error-read(:Tk.Num) { ,it :Tk =>
+        tks->check-read("-") and tks->error-read(:Tk.Num) { \it :Tk =>
             -(it.str->to.number)
         }
-        tks->check-read(:Tk.Num) { ,tk1 :Tk => tk1.str->to.number }
-        tks->check-read(:Tk.Tag) { ,tk2 :Tk =>
+        tks->check-read(:Tk.Num) { \tk1 :Tk => tk1.str->to.number }
+        tks->check-read(:Tk.Tag) { \tk2 :Tk =>
             val tg = tk2.str->to.tag
             if not tks->check("[") {
                 tg
@@ -74,13 +74,13 @@ set con-parse = func (tks :Tokens) {
                 tag(tg, tup)
             }
         }
-        tks->check-read(:Tk.Chr) { ,tk3 :Tk => tk3.str->fp.drop-first->fp.drop-last->to.char }
+        tks->check-read(:Tk.Chr) { \tk3 :Tk => tk3.str->fp.drop-first->fp.drop-last->to.char }
         tks->check-read("[")
             => con-list(tks)
         tks->check-read("#") and tks->error-read("[")
             => to.vector(con-list(tks))
         tks->check-read("@") and tks->error-read("[") {
-            con-list(tks) <- \{
+            con-list(tks) <- {
                 if tks->check-read("(") {
                     val k = tks->con-parse()
                     tks->error-read(",")
