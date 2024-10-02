@@ -3,7 +3,7 @@ data :Tokens = [lexer :Iterator, buf :Tk]
 func tks-init (itr :Iterator) {
     val lexer :Iterator = iter-lexer(itr)
     val tk = lexer->next()
-    :Tokens [lexer, tk]
+    :Tokens [drop(lexer), drop(tk)]
 }
 
 func eof? (tks :Tokens) {

@@ -52,7 +52,7 @@ func con-list (tks :Tokens, f) {
         loop [i,[v]] in to.iter(it,[:idx,:val]) {
             set it[i] = v
         }
-        it
+        drop(it)
     }
 }
 
@@ -70,8 +70,7 @@ set con-parse = func (tks :Tokens) {
             if not tks->check("[") {
                 tg
             } else {
-                val tup = tks->con-parse()
-                tag(tg, tup)
+                tag(tg, tks->con-parse())
             }
         }
         tks->check-read(:Tk.Chr) { \tk3 :Tk => tk3.str->fp.drop-first->fp.drop-last->to.char }
@@ -86,12 +85,12 @@ set con-parse = func (tks :Tokens) {
                     tks->error-read(",")
                     val v = tks->con-parse()
                     tks->error-read(")")
-                    [k,v]
+                    [drop(k),drop(v)]
                 } else {
                     val k :Tk = tks->error-read(:Tk.Id)
                     tks->error-read("=")
                     val v = tks->con-parse()
-                    [to.tag(":"++k.str) or :nil, v]
+                    [to.tag(":"++k.str) or :nil, drop(v)]
                 }
             } --> to.dict
         }

@@ -59,10 +59,15 @@ func read-until-f (buf, f-pred) {
     loop {
         val c = buf->read-c()
         until f-pred(c)
-        assert(c, :Buffer [str])
+        ;;assert(c) <-- { :Buffer [drop(str)] }
+        if not c {
+            error(:Buffer [drop(str)])
+        }
+        ;;;
+        ;;;
         set str[+] = c
     }
-    str
+    drop(str)
 }
 
 func read-until-c (buf, c) {

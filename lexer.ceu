@@ -51,25 +51,25 @@ func iter-lexer (inp :Iterator) {
         val spc :Iterator = iter-spaces(buf)
         loop {
             val c = spc->next()
-            val pos = copy(buf.cur.pos)
+            val pos = buf.cur.pos
             while c
             match c {
                 in? ['@','#','(',')','[',']',',','-','='] {
-                    yield(:Tk.Sym [pos, to.string(c)])
+                    yield(:Tk.Sym [copy(pos), to.string(c)])
                 }
                 ':' {                   ;; TAG
                     buf->read-while-f(char.letter-or-digit?) thus {
-                        yield(:Tk.Tag [pos, to.string(c) ++ it])
+                        yield(:Tk.Tag [copy(pos), to.string(c) ++ it])
                     }
                 }
                 '\'' {
                     val c2 = buf->read-c()
                     match c2 {
                         '\'' => error(:Tk.Err [copy(buf.cur.pos), "unexpected \"'\""])
-                        nil => error(:Tk.Err [pos, "unterminated \"'\""])
+                        nil => error(:Tk.Err [copy(pos), "unterminated \"'\""])
                         '\\' {
                             val c3 = buf->read-c()
-                            assert(c3, :Tk.Err [pos, "unterminated \"'\""])
+                            assert(c3, :Tk.Err [copy(pos), "unterminated \"'\""])
                             #['\\',c3]
                         }
                         else => to.string(c2)
@@ -77,7 +77,7 @@ func iter-lexer (inp :Iterator) {
                         buf->read-c() thus {
                             assert(it == '\'', :Tk.Err [copy(buf.cur.pos), "expected \"'\""])
                         }
-                        yield(:Tk.Chr [pos,"'" ++ to.string(it) ++ "'"])
+                        yield(:Tk.Chr [copy(pos),"'" ++ to.string(it) ++ "'"])
                     }
                 }
                 '"' {
@@ -90,23 +90,23 @@ func iter-lexer (inp :Iterator) {
                         }
                     }
                     if v is? :Buffer {
-                        yield(:Tk.Err [pos, "string error : unterminated \""])
+                        yield(:Tk.Err [copy(pos), "string error : unterminated \""])
                     } else {
-                        yield(:Tk.Sym [pos, "#"])
-                        yield(:Tk.Sym [pos, "["])
+                        yield(:Tk.Sym [copy(pos), "#"])
+                        yield(:Tk.Sym [copy(pos), "["])
                         val itr :Iterator = to.iter(v)
                         loop c' in itr {
                             if itr.i > 1 {
-                                yield(:Tk.Sym [pos, ","])
+                                yield(:Tk.Sym [copy(pos), ","])
                             }
                             val s = if (c' == '\\')
                                         => (#[c', x] where {
                                                 val x=itr.f(itr)
                                              })
                                         => #[c']
-                            yield(:Tk.Chr [pos, "'" ++ s ++ "'"])
+                            yield(:Tk.Chr [copy(pos), "'" ++ s ++ "'"])
                         }
-                        yield(:Tk.Sym [pos, "]"])
+                        yield(:Tk.Sym [copy(pos), "]"])
                     }
                 }
                 {{char.digit?}} {            ;; NUM
@@ -114,19 +114,19 @@ func iter-lexer (inp :Iterator) {
                     buf->read-while-f <- {
                         (it == '.') or char.letter-or-digit?(it)
                     } thus {
-                        yield(:Tk.Num [pos,it])
+                        yield(:Tk.Num [copy(pos),it])
                     }
                 }
                 {{char.letter?}} {           ;; KEY / ID
                     val id = to.string(c) ++ buf->read-while-f(char.letter?)
                     val tk = if id in? KEYS {
-                        :Tk.Sym [pos, id]
+                        :Tk.Sym [copy(pos), id]
                     } else {
-                        :Tk.Id  [pos, id]
+                        :Tk.Id  [copy(pos), id]
                     }
-                    yield(tk)
+                    yield(drop(tk))
                 }
-                else => error(:Tk.Err [pos, "invalid input"])
+                else => error(:Tk.Err [copy(pos), "invalid input"])
             }
         }
     }

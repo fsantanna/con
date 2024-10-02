@@ -1,6 +1,6 @@
 data :Char = [letter?, digit?, letter-or-digit?]
 
-val char :Char = do {
+val char :Char = group {
     func x-letter? (c) {
         (c is? :char) and (to.number(c) thus {
             ((it >= to.number('a')) and (it <= to.number('z'))) or
