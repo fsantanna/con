@@ -1,6 +1,7 @@
 func to-iter-file (f-name) {
     val f-ptr  = to.pointer(f-name)
     val f-hand = `:pointer fopen((char*)$f-ptr.Pointer, "r")`
+    assert(f-hand /= `:pointer NULL`) <-- { "cannot open \"" ++ f-name ++ "\""}
     to.iter <-- coro () {
         val f = f-hand
         defer {
@@ -16,7 +17,7 @@ func to-iter-file (f-name) {
 
 test {
     println(:ITER-FILE)
-    val itr :Iterator = to-iter-file("x.ceu")
+    val itr :Iterator = to-iter-file("x.txt")
     assert(itr->next() == '1')
     assert(itr->next() == ' ')
     assert(itr->next() == '2')

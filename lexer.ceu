@@ -292,7 +292,7 @@ test {
 
 test {
     println(:LEXER-X)
-    val itr = to-iter-file("x.ceu")
+    val itr = to-iter-file("x.txt")
     val lexer :Iterator = iter-lexer(itr)
     lexer->next() thus {
         assert(it === :Tk.Num [[1,1],"1"])
